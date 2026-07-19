@@ -89,6 +89,24 @@ Sizing (small, cheap, legible): one serverless SQL warehouse (auto-stop), one
 small Vector Search endpoint (reused), scale-to-zero agent serving, small
 serverless jobs.
 
+## Deployed demo assets (elexon workspace)
+
+Live as of the build (all on `fevm-elexon-app-for-settlement-acc`):
+
+| Asset | Location |
+| --- | --- |
+| App — Assessment Analytics Portal | https://momentum-claims-portal-7474654808133980.aws.databricksapps.com |
+| Dashboard — Ops & SLA | `/sql/dashboardsv3/01f1839979be1818a306e0692d82431e` |
+| Dashboard — NTU / Drop-off | `/sql/dashboardsv3/01f18399a36b11b88d36ceea7aabe698` |
+| Dashboard — Executive View | `/sql/dashboardsv3/01f18399b5011d95a90eb5a55fdea000` |
+| Genie space — Momentum Claims Analyst | `01f18397532a1ba0b35d2e530bd1691a` |
+| Vector Search index | `momentum_claims_ai.idx_documents` on `valterra-vs-endpoint` |
+| SQL warehouse | `dcb1c3dd8d1570d6` (Serverless Starter) |
+
+App service principal `4b5790c0-f4df-4c53-b5bb-266e1e55481f` is granted: USE/SELECT
+on the gold + silver schemas, USE/SELECT/EXECUTE on `ai`, USE/SELECT/MODIFY on
+`ops`, `CAN_USE` on the warehouse, and `CAN_RUN` on the Genie space.
+
 ## Teardown
 
 ```bash
