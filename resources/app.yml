@@ -20,3 +20,8 @@ resources:
           serving_endpoint:
             name: ${var.llm_endpoint}
             permission: CAN_QUERY
+        - name: genie_space
+          description: Genie space "Momentum Claims Analyst" — the app SP must be able to run it (AI Copilot + Exec pages).
+          genie_space:
+            id: ${var.genie_space_id}
+            permission: CAN_RUN

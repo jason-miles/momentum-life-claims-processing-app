@@ -1,0 +1,230 @@
+{
+  "datasets": [
+    {
+      "name": "ops_ds",
+      "displayName": "Ops metrics",
+      "queryLines": [
+        "SELECT claim_no, claim_type, assessor, lodge_ts, decided_ts, ",
+        "days_lodge_to_decision, sla_days, sla_breach ",
+        "FROM elexon_app_for_settlement_acc_catalog.momentum_claims_gold.ops_metrics"
+      ]
+    },
+    {
+      "name": "breach_ds",
+      "displayName": "Decided claims",
+      "queryLines": [
+        "SELECT claim_no, claim_type, assessor, days_lodge_to_decision, ",
+        "CASE WHEN sla_breach THEN 'breach' ELSE 'within SLA' END AS sla_status ",
+        "FROM elexon_app_for_settlement_acc_catalog.momentum_claims_gold.ops_metrics ",
+        "WHERE sla_breach IS NOT NULL"
+      ]
+    },
+    {
+      "name": "throughput_ds",
+      "displayName": "Throughput per assessor",
+      "queryLines": [
+        "SELECT assessor, MEASURE(n_decided) AS n_decided, MEASURE(n_paid) AS n_paid ",
+        "FROM elexon_app_for_settlement_acc_catalog.momentum_claims_gold.throughput_per_assessor ",
+        "GROUP BY assessor"
+      ]
+    },
+    {
+      "name": "trend_ds",
+      "displayName": "Cycle-time trend",
+      "queryLines": [
+        "SELECT DATE_TRUNC('MONTH', lodge_ts) AS lodge_month, ",
+        "AVG(days_lodge_to_decision) AS avg_cycle_days ",
+        "FROM elexon_app_for_settlement_acc_catalog.momentum_claims_gold.ops_metrics ",
+        "WHERE days_lodge_to_decision IS NOT NULL ",
+        "GROUP BY DATE_TRUNC('MONTH', lodge_ts)"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "ops_page",
+      "displayName": "Claims Ops & SLA",
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layout": [
+        {
+          "widget": {
+            "name": "title",
+            "multilineTextboxSpec": {"lines": ["## Momentum Life — Claims Ops & SLA"]}
+          },
+          "position": {"x": 0, "y": 0, "width": 6, "height": 1}
+        },
+        {
+          "widget": {
+            "name": "subtitle",
+            "multilineTextboxSpec": {"lines": ["Lodge-to-decision throughput against the 20-day SLA."]}
+          },
+          "position": {"x": 0, "y": 1, "width": 6, "height": 1}
+        },
+        {
+          "widget": {
+            "name": "kpi-breaches",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "breach_ds",
+                "fields": [{"name": "count_breach", "expression": "COUNT_IF(`sla_status` = 'breach')"}],
+                "disaggregated": false
+              }
+            }],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {"value": {"fieldName": "count_breach", "displayName": "SLA breaches"}},
+              "frame": {"showTitle": true, "title": "SLA breaches"}
+            }
+          },
+          "position": {"x": 0, "y": 2, "width": 2, "height": 3}
+        },
+        {
+          "widget": {
+            "name": "kpi-decided",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "breach_ds",
+                "fields": [{"name": "count_decided", "expression": "COUNT(`claim_no`)"}],
+                "disaggregated": false
+              }
+            }],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {"value": {"fieldName": "count_decided", "displayName": "Decided claims"}},
+              "frame": {"showTitle": true, "title": "Decided claims"}
+            }
+          },
+          "position": {"x": 2, "y": 2, "width": 2, "height": 3}
+        },
+        {
+          "widget": {
+            "name": "kpi-avgcycle",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "ops_ds",
+                "fields": [{"name": "avg_cycle", "expression": "AVG(`days_lodge_to_decision`)"}],
+                "disaggregated": false
+              }
+            }],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {"value": {"fieldName": "avg_cycle", "displayName": "Avg cycle (days)"}},
+              "frame": {"showTitle": true, "title": "Avg cycle time (days)"}
+            }
+          },
+          "position": {"x": 4, "y": 2, "width": 2, "height": 3}
+        },
+        {
+          "widget": {
+            "name": "section-charts",
+            "multilineTextboxSpec": {"lines": ["### Throughput & cycle time"]}
+          },
+          "position": {"x": 0, "y": 5, "width": 6, "height": 1}
+        },
+        {
+          "widget": {
+            "name": "throughput-bar",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "throughput_ds",
+                "fields": [
+                  {"name": "assessor", "expression": "`assessor`"},
+                  {"name": "n_decided", "expression": "`n_decided`"}
+                ],
+                "disaggregated": false
+              }
+            }],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {"fieldName": "assessor", "scale": {"type": "categorical", "sort": {"by": "y-reversed"}}, "displayName": "Assessor"},
+                "y": {"fieldName": "n_decided", "scale": {"type": "quantitative"}, "displayName": "Claims decided"},
+                "label": {"show": true}
+              },
+              "frame": {"showTitle": true, "title": "Throughput per assessor"},
+              "mark": {"colors": ["#003366"]}
+            }
+          },
+          "position": {"x": 0, "y": 6, "width": 3, "height": 6}
+        },
+        {
+          "widget": {
+            "name": "cycle-trend",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "trend_ds",
+                "fields": [
+                  {"name": "lodge_month", "expression": "`lodge_month`"},
+                  {"name": "avg_cycle_days", "expression": "`avg_cycle_days`"}
+                ],
+                "disaggregated": false
+              }
+            }],
+            "spec": {
+              "version": 3,
+              "widgetType": "line",
+              "encodings": {
+                "x": {"fieldName": "lodge_month", "scale": {"type": "temporal"}, "displayName": "Lodge month"},
+                "y": {"fieldName": "avg_cycle_days", "scale": {"type": "quantitative"}, "displayName": "Avg cycle (days)"}
+              },
+              "frame": {"showTitle": true, "title": "Cycle-time trend"},
+              "mark": {"colors": ["#00A9E0"]}
+            }
+          },
+          "position": {"x": 3, "y": 6, "width": 3, "height": 6}
+        },
+        {
+          "widget": {
+            "name": "section-overdue",
+            "multilineTextboxSpec": {"lines": ["### Overdue / breaching claims"]}
+          },
+          "position": {"x": 0, "y": 12, "width": 6, "height": 1}
+        },
+        {
+          "widget": {
+            "name": "overdue-table",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "breach_ds",
+                "fields": [
+                  {"name": "claim_no", "expression": "`claim_no`"},
+                  {"name": "claim_type", "expression": "`claim_type`"},
+                  {"name": "assessor", "expression": "`assessor`"},
+                  {"name": "days_lodge_to_decision", "expression": "`days_lodge_to_decision`"},
+                  {"name": "sla_status", "expression": "`sla_status`"}
+                ],
+                "disaggregated": true
+              }
+            }],
+            "spec": {
+              "version": 2,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {"fieldName": "claim_no", "displayName": "Claim"},
+                  {"fieldName": "claim_type", "displayName": "Type"},
+                  {"fieldName": "assessor", "displayName": "Assessor"},
+                  {"fieldName": "days_lodge_to_decision", "displayName": "Days lodge→decision"},
+                  {"fieldName": "sla_status", "displayName": "SLA status"}
+                ]
+              },
+              "frame": {"showTitle": true, "title": "Decided claims (SLA status)"}
+            }
+          },
+          "position": {"x": 0, "y": 13, "width": 6, "height": 7}
+        }
+      ]
+    }
+  ],
+  "uiSettings": {"theme": {"widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"}}
+}

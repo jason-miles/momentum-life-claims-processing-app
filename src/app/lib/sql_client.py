@@ -64,14 +64,34 @@ def _connect():
             server_hostname=hostname, http_path=http_path, access_token=token
         )
 
-    # 2) Databricks Apps / SDK credential provider (service principal OAuth).
-    try:
-        from databricks.sdk.core import Config, oauth_service_principal
+    # 2) Databricks Apps service-principal OAuth (injected client id/secret).
+    if os.environ.get("DATABRICKS_CLIENT_ID") and os.environ.get("DATABRICKS_CLIENT_SECRET"):
+        try:
+            from databricks.sdk.core import Config, oauth_service_principal
 
-        cfg = Config(host=f"https://{hostname}")
+            cfg = Config(host=f"https://{hostname}")
+
+            def credential_provider():
+                return oauth_service_principal(cfg)
+
+            return dbsql.connect(
+                server_hostname=hostname,
+                http_path=http_path,
+                credentials_provider=credential_provider,
+            )
+        except Exception:
+            pass
+
+    # 3) Generic SDK credential provider (local profile: PAT, U2M/OAuth, etc.).
+    try:
+        from databricks.sdk import WorkspaceClient
+
+        profile = os.environ.get("DATABRICKS_CONFIG_PROFILE")
+        w = WorkspaceClient(profile=profile) if profile else WorkspaceClient()
+        header_factory = w.config.authenticate  # callable -> {"Authorization": ...}
 
         def credential_provider():
-            return oauth_service_principal(cfg)
+            return header_factory
 
         return dbsql.connect(
             server_hostname=hostname,

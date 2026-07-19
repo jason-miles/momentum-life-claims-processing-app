@@ -1,0 +1,141 @@
+{
+  "datasets": [
+    {
+      "name": "funnel_ds",
+      "displayName": "NTU funnel",
+      "queryLines": [
+        "SELECT claim_type, state, n_claims, n_ntu ",
+        "FROM elexon_app_for_settlement_acc_catalog.momentum_claims_gold.ntu_funnel"
+      ]
+    },
+    {
+      "name": "ntu_rate_ds",
+      "displayName": "NTU rate by type",
+      "queryLines": [
+        "SELECT claim_type, MEASURE(ntu_rate) AS ntu_rate, ",
+        "MEASURE(n_initiated) AS n_initiated, MEASURE(n_ntu) AS n_ntu ",
+        "FROM elexon_app_for_settlement_acc_catalog.momentum_claims_gold.ntu_rate ",
+        "GROUP BY claim_type"
+      ]
+    },
+    {
+      "name": "at_risk_ds",
+      "displayName": "At-risk pre-lodge claims",
+      "queryLines": [
+        "SELECT claim_no, policy_no, claim_type, event_date, days_outstanding, ",
+        "n_outstanding_reqs, drop_off_propensity ",
+        "FROM elexon_app_for_settlement_acc_catalog.momentum_claims_gold.ntu_at_risk"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "ntu_page",
+      "displayName": "NTU / Drop-off",
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layout": [
+        {
+          "widget": {"name": "title", "multilineTextboxSpec": {"lines": ["## Momentum Life — NTU / Pre-lodge Drop-off"]}},
+          "position": {"x": 0, "y": 0, "width": 6, "height": 1}
+        },
+        {
+          "widget": {"name": "subtitle", "multilineTextboxSpec": {"lines": ["Not-Taken-Up leakage: claims initiated but never lodged, and the pre-lodge claims most at risk right now."]}},
+          "position": {"x": 0, "y": 1, "width": 6, "height": 1}
+        },
+        {
+          "widget": {
+            "name": "kpi-ntu-total",
+            "queries": [{"name": "main_query", "query": {"datasetName": "funnel_ds", "fields": [{"name": "sum_ntu", "expression": "SUM(`n_ntu`)"}], "disaggregated": false}}],
+            "spec": {"version": 2, "widgetType": "counter", "encodings": {"value": {"fieldName": "sum_ntu", "displayName": "NTU claims"}}, "frame": {"showTitle": true, "title": "Total NTU claims"}}
+          },
+          "position": {"x": 0, "y": 2, "width": 2, "height": 3}
+        },
+        {
+          "widget": {
+            "name": "kpi-at-risk",
+            "queries": [{"name": "main_query", "query": {"datasetName": "at_risk_ds", "fields": [{"name": "count_at_risk", "expression": "COUNT(`claim_no`)"}], "disaggregated": false}}],
+            "spec": {"version": 2, "widgetType": "counter", "encodings": {"value": {"fieldName": "count_at_risk", "displayName": "At-risk pre-lodge"}}, "frame": {"showTitle": true, "title": "Pre-lodge claims at risk"}}
+          },
+          "position": {"x": 2, "y": 2, "width": 2, "height": 3}
+        },
+        {
+          "widget": {
+            "name": "kpi-avg-prop",
+            "queries": [{"name": "main_query", "query": {"datasetName": "at_risk_ds", "fields": [{"name": "avg_prop", "expression": "AVG(`drop_off_propensity`)"}], "disaggregated": false}}],
+            "spec": {"version": 2, "widgetType": "counter", "encodings": {"value": {"fieldName": "avg_prop", "displayName": "Avg drop-off propensity"}}, "frame": {"showTitle": true, "title": "Avg drop-off propensity"}}
+          },
+          "position": {"x": 4, "y": 2, "width": 2, "height": 3}
+        },
+        {
+          "widget": {"name": "section-funnel", "multilineTextboxSpec": {"lines": ["### Funnel & NTU rate"]}},
+          "position": {"x": 0, "y": 5, "width": 6, "height": 1}
+        },
+        {
+          "widget": {
+            "name": "funnel-bar",
+            "queries": [{"name": "main_query", "query": {"datasetName": "funnel_ds", "fields": [{"name": "state", "expression": "`state`"}, {"name": "sum(n_claims)", "expression": "SUM(`n_claims`)"}, {"name": "claim_type", "expression": "`claim_type`"}], "disaggregated": false}}],
+            "spec": {
+              "version": 3, "widgetType": "bar",
+              "encodings": {
+                "x": {"fieldName": "state", "scale": {"type": "categorical"}, "displayName": "State"},
+                "y": {"fieldName": "sum(n_claims)", "scale": {"type": "quantitative"}, "displayName": "Claims"},
+                "color": {"fieldName": "claim_type", "scale": {"type": "categorical"}, "displayName": "Claim type"}
+              },
+              "frame": {"showTitle": true, "title": "Claim funnel by state & type"},
+              "mark": {"colors": ["#003366", "#00A9E0", "#C77700", "#1E874B"]}
+            }
+          },
+          "position": {"x": 0, "y": 6, "width": 3, "height": 6}
+        },
+        {
+          "widget": {
+            "name": "ntu-rate-bar",
+            "queries": [{"name": "main_query", "query": {"datasetName": "ntu_rate_ds", "fields": [{"name": "claim_type", "expression": "`claim_type`"}, {"name": "ntu_rate", "expression": "`ntu_rate`"}], "disaggregated": false}}],
+            "spec": {
+              "version": 3, "widgetType": "bar",
+              "encodings": {
+                "x": {"fieldName": "claim_type", "scale": {"type": "categorical", "sort": {"by": "y-reversed"}}, "displayName": "Claim type"},
+                "y": {"fieldName": "ntu_rate", "scale": {"type": "quantitative"}, "displayName": "NTU rate"},
+                "label": {"show": true}
+              },
+              "frame": {"showTitle": true, "title": "NTU rate by claim type"},
+              "mark": {"colors": ["#C0392B"]}
+            }
+          },
+          "position": {"x": 3, "y": 6, "width": 3, "height": 6}
+        },
+        {
+          "widget": {"name": "section-atrisk", "multilineTextboxSpec": {"lines": ["### Pre-lodge claims at risk (highest propensity first)"]}},
+          "position": {"x": 0, "y": 12, "width": 6, "height": 1}
+        },
+        {
+          "widget": {
+            "name": "at-risk-table",
+            "queries": [{"name": "main_query", "query": {"datasetName": "at_risk_ds", "fields": [
+              {"name": "claim_no", "expression": "`claim_no`"},
+              {"name": "claim_type", "expression": "`claim_type`"},
+              {"name": "event_date", "expression": "`event_date`"},
+              {"name": "days_outstanding", "expression": "`days_outstanding`"},
+              {"name": "n_outstanding_reqs", "expression": "`n_outstanding_reqs`"},
+              {"name": "drop_off_propensity", "expression": "`drop_off_propensity`"}
+            ], "disaggregated": true}}],
+            "spec": {
+              "version": 2, "widgetType": "table",
+              "encodings": {"columns": [
+                {"fieldName": "claim_no", "displayName": "Claim"},
+                {"fieldName": "claim_type", "displayName": "Type"},
+                {"fieldName": "event_date", "displayName": "Event date"},
+                {"fieldName": "days_outstanding", "displayName": "Days outstanding"},
+                {"fieldName": "n_outstanding_reqs", "displayName": "Outstanding reqs"},
+                {"fieldName": "drop_off_propensity", "displayName": "Drop-off propensity"}
+              ]},
+              "frame": {"showTitle": true, "title": "At-risk pre-lodge claims"}
+            }
+          },
+          "position": {"x": 0, "y": 13, "width": 6, "height": 7}
+        }
+      ]
+    }
+  ],
+  "uiSettings": {"theme": {"widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"}}
+}

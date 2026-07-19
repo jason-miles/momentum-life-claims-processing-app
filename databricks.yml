@@ -31,6 +31,9 @@ variables:
   vs_endpoint:
     description: Vector Search endpoint name (reuses existing ONLINE endpoint on the demo workspace).
     default: valterra-vs-endpoint
+  genie_space_id:
+    description: Genie space "Momentum Claims Analyst" id, injected into the app for the AI Copilot + Exec pages.
+    default: 01f18397532a1ba0b35d2e530bd1691a
 
 include:
   - resources/*.yml

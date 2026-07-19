@@ -1,0 +1,129 @@
+{
+  "datasets": [
+    {
+      "name": "cycle_ds",
+      "displayName": "Cycle time metric",
+      "queryLines": [
+        "SELECT MEASURE(avg_cycle_days) AS avg_cycle_days ",
+        "FROM elexon_app_for_settlement_acc_catalog.momentum_claims_gold.claim_cycle_time"
+      ]
+    },
+    {
+      "name": "ntu_ds",
+      "displayName": "NTU rate metric",
+      "queryLines": [
+        "SELECT MEASURE(ntu_rate) AS ntu_rate ",
+        "FROM elexon_app_for_settlement_acc_catalog.momentum_claims_gold.ntu_rate"
+      ]
+    },
+    {
+      "name": "sla_ds",
+      "displayName": "SLA attainment metric",
+      "queryLines": [
+        "SELECT MEASURE(sla_attainment_pct) AS sla_attainment_pct ",
+        "FROM elexon_app_for_settlement_acc_catalog.momentum_claims_gold.sla_attainment"
+      ]
+    },
+    {
+      "name": "decision_ds",
+      "displayName": "Decision split",
+      "queryLines": [
+        "SELECT decision, SUM(n) AS n ",
+        "FROM elexon_app_for_settlement_acc_catalog.momentum_claims_gold.decision_split ",
+        "GROUP BY decision"
+      ]
+    },
+    {
+      "name": "province_ds",
+      "displayName": "Claims by province",
+      "queryLines": [
+        "SELECT province, COUNT(*) AS n_claims ",
+        "FROM elexon_app_for_settlement_acc_catalog.momentum_claims_gold.claim_synopsis_view ",
+        "WHERE province IS NOT NULL ",
+        "GROUP BY province"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "exec_page",
+      "displayName": "Executive View",
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layout": [
+        {
+          "widget": {"name": "title", "multilineTextboxSpec": {"lines": ["## Momentum Life — Executive View"]}},
+          "position": {"x": 0, "y": 0, "width": 6, "height": 1}
+        },
+        {
+          "widget": {"name": "subtitle", "multilineTextboxSpec": {"lines": ["Claims health at a glance: cycle time, pre-lodge drop-off and SLA attainment."]}},
+          "position": {"x": 0, "y": 1, "width": 6, "height": 1}
+        },
+        {
+          "widget": {
+            "name": "kpi-cycle",
+            "queries": [{"name": "main_query", "query": {"datasetName": "cycle_ds", "fields": [{"name": "avg_cycle_days", "expression": "`avg_cycle_days`"}], "disaggregated": true}}],
+            "spec": {"version": 2, "widgetType": "counter", "encodings": {"value": {"fieldName": "avg_cycle_days", "displayName": "Avg cycle (days)"}}, "frame": {"showTitle": true, "title": "Avg cycle time (days)"}}
+          },
+          "position": {"x": 0, "y": 2, "width": 2, "height": 3}
+        },
+        {
+          "widget": {
+            "name": "kpi-ntu",
+            "queries": [{"name": "main_query", "query": {"datasetName": "ntu_ds", "fields": [{"name": "ntu_rate", "expression": "`ntu_rate`"}], "disaggregated": true}}],
+            "spec": {"version": 2, "widgetType": "counter", "encodings": {"value": {"fieldName": "ntu_rate", "displayName": "NTU rate", "format": {"type": "number-percent", "decimalPlaces": {"type": "max", "places": 1}}}}, "frame": {"showTitle": true, "title": "NTU rate"}}
+          },
+          "position": {"x": 2, "y": 2, "width": 2, "height": 3}
+        },
+        {
+          "widget": {
+            "name": "kpi-sla",
+            "queries": [{"name": "main_query", "query": {"datasetName": "sla_ds", "fields": [{"name": "sla_attainment_pct", "expression": "`sla_attainment_pct`"}], "disaggregated": true}}],
+            "spec": {"version": 2, "widgetType": "counter", "encodings": {"value": {"fieldName": "sla_attainment_pct", "displayName": "SLA attainment %"}}, "frame": {"showTitle": true, "title": "SLA attainment (%)"}}
+          },
+          "position": {"x": 4, "y": 2, "width": 2, "height": 3}
+        },
+        {
+          "widget": {"name": "section-mix", "multilineTextboxSpec": {"lines": ["### Decision mix & geography"]}},
+          "position": {"x": 0, "y": 5, "width": 6, "height": 1}
+        },
+        {
+          "widget": {
+            "name": "decision-donut",
+            "queries": [{"name": "main_query", "query": {"datasetName": "decision_ds", "fields": [{"name": "decision", "expression": "`decision`"}, {"name": "sum(n)", "expression": "SUM(`n`)"}], "disaggregated": false}}],
+            "spec": {
+              "version": 3, "widgetType": "pie",
+              "encodings": {
+                "angle": {"fieldName": "sum(n)", "scale": {"type": "quantitative"}, "displayName": "Claims"},
+                "color": {"fieldName": "decision", "scale": {"type": "categorical", "mappings": [
+                  {"value": "pay", "color": "#1E874B"},
+                  {"value": "decline", "color": "#C0392B"},
+                  {"value": "refer", "color": "#C77700"}
+                ]}, "displayName": "Decision"}
+              },
+              "frame": {"showTitle": true, "title": "Decision split"}
+            }
+          },
+          "position": {"x": 0, "y": 6, "width": 3, "height": 6}
+        },
+        {
+          "widget": {
+            "name": "province-bar",
+            "queries": [{"name": "main_query", "query": {"datasetName": "province_ds", "fields": [{"name": "province", "expression": "`province`"}, {"name": "n_claims", "expression": "`n_claims`"}], "disaggregated": false}}],
+            "spec": {
+              "version": 3, "widgetType": "bar",
+              "encodings": {
+                "x": {"fieldName": "n_claims", "scale": {"type": "quantitative"}, "displayName": "Claims"},
+                "y": {"fieldName": "province", "scale": {"type": "categorical", "sort": {"by": "x-reversed"}}, "displayName": "Province"},
+                "label": {"show": true}
+              },
+              "frame": {"showTitle": true, "title": "Claims by province"},
+              "mark": {"colors": ["#003366"]}
+            }
+          },
+          "position": {"x": 3, "y": 6, "width": 3, "height": 6}
+        }
+      ]
+    }
+  ],
+  "uiSettings": {"theme": {"widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"}}
+}
