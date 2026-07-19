@@ -1,0 +1,84 @@
+# Jobs for the Momentum Life Claims demo.
+#
+# The build is intentionally driven by ordered SQL + a synthetic-data generator
+# so it runs on cheap serverless compute. This job wires the whole medallion
+# rebuild into one runnable pipeline for a clean `bundle deploy` + `run`.
+resources:
+  jobs:
+    momentum_claims_build:
+      name: "[Momentum Claims] Build medallion + AI assets"
+      tags:
+        project: momentum-claims-demo
+      # All tasks run on serverless — no cluster to pin, and serverless in this
+      # workspace region keeps compute out of the USA (see docs/05).
+      tasks:
+        - task_key: generate_bronze
+          description: Generate deterministic synthetic data and land it in bronze.
+          spark_python_task:
+            python_file: ../src/synthetic_data/generate.py
+            parameters: ["--catalog", "${var.catalog}"]
+          environment_key: default
+
+        - task_key: build_silver
+          description: Conform bronze -> silver (typed, deduped).
+          depends_on: [{ task_key: generate_bronze }]
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: ../src/pipelines/silver/build_silver.sql
+
+        - task_key: build_gold
+          description: Build gold serving views + certified products.
+          depends_on: [{ task_key: build_silver }]
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: ../src/pipelines/gold/build_gold.sql
+
+        - task_key: build_metric_views
+          description: Build the six UC Metric Views.
+          depends_on: [{ task_key: build_gold }]
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: ../src/pipelines/gold/build_metric_views.sql
+
+        - task_key: build_uc_tools
+          description: Deploy the six UC-function agent tools.
+          depends_on: [{ task_key: build_gold }]
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: ../src/ai/tools/build_tools.sql
+
+        - task_key: build_vector_index
+          description: Build the document chunk table + Vector Search index.
+          depends_on: [{ task_key: build_silver }]
+          spark_python_task:
+            python_file: ../src/ai/build_indexes.py
+          environment_key: default
+
+      environments:
+        - environment_key: default
+          spec:
+            client: "3"
+            dependencies:
+              - pandas
+              - numpy
+              - databricks-vectorsearch
+
+    momentum_claims_eval:
+      name: "[Momentum Claims] Synopsis agent evaluation"
+      tags:
+        project: momentum-claims-demo
+      tasks:
+        - task_key: eval_synopsis
+          description: MLflow eval of the synopsis agent over seeded scenarios DS1-DS3.
+          spark_python_task:
+            python_file: ../src/ai/eval/eval_synopsis.py
+          environment_key: default
+      environments:
+        - environment_key: default
+          spec:
+            client: "3"
+            dependencies: ["mlflow", "openai", "databricks-sdk"]

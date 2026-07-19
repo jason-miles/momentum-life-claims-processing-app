@@ -1,0 +1,47 @@
+# Momentum Life — Claims Processing App (App 2)
+# Databricks Asset Bundle root.
+#
+# DATA RESIDENCY (HARD CONSTRAINT): "Anything to the USA is not allowed."
+# af-south-1 (Cape Town) is NOT a supported Databricks region, so the demo
+# targets eu-west-1 (Ireland) — the spec's approved secondary region — which
+# keeps all compute, storage, serving and inference out of the USA.
+# See docs/05_DEPLOYMENT.md for the full residency justification (US1.3).
+#
+# Deploy:  databricks bundle validate -t demo
+#          databricks bundle deploy   -t demo
+bundle:
+  name: momentum-claims-demo
+
+variables:
+  catalog:
+    description: Unity Catalog for the demo. Spec asks for momentum_claims_demo; falls back to a co-located catalog if the caller lacks CREATE CATALOG.
+    default: momentum_claims_demo
+  approved_region:
+    description: Residency-compliant region for ALL resources (never us-*).
+    default: eu-west-1
+  warehouse_id:
+    description: Serverless SQL warehouse id used by the app, dashboards and Genie. Set per-workspace after deploy.
+    default: ""
+  llm_endpoint:
+    description: Model Serving endpoint for Claude Sonnet, fronted by AI Gateway. Must resolve in an approved region.
+    default: databricks-claude-sonnet-4-6
+  embedding_endpoint:
+    description: Embedding model endpoint for Vector Search.
+    default: databricks-gte-large-en
+  vs_endpoint:
+    description: Vector Search endpoint name (reuses existing ONLINE endpoint on the demo workspace).
+    default: valterra-vs-endpoint
+
+include:
+  - resources/*.yml
+
+targets:
+  demo:
+    mode: development
+    default: true
+    workspace:
+      # Host is set per-machine via `databricks bundle deploy -t demo -p <profile>`
+      # or the DATABRICKS_HOST env var. Must be a eu-west-1 (Ireland) workspace.
+      root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+    run_as:
+      user_name: ${workspace.current_user.userName}

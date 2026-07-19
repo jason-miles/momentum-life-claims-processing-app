@@ -1,0 +1,21 @@
+# Unity Catalog layout for the Momentum Life Claims demo.
+#
+# The spec asks for a dedicated catalog `momentum_claims_demo` with schemas
+# bronze/silver/gold/ai/ops. The demo workspace's metastore uses Default
+# Storage with no storage root, so CREATE CATALOG is unavailable to the
+# deploying user. We therefore co-locate the medallion as five schemas inside
+# the existing managed catalog `elexon_app_for_settlement_acc_catalog`:
+#
+#   momentum_claims_bronze   raw synthetic landing (1:1 with source shapes)
+#   momentum_claims_silver   conformed, deduped, keyed by claim/policy number
+#   momentum_claims_gold     certified products + serving views + Metric Views
+#   momentum_claims_ai       vector indexes, agent tools (UC functions), models
+#   momentum_claims_ops      app state / audit (Delta; Lakebase in PHASE 2+)
+#
+# On a workspace where a dedicated catalog CAN be created, set var.catalog to
+# `momentum_claims_demo` and change the schema names to bronze/silver/gold/ai/ops.
+#
+# Schemas are created idempotently by the setup job (resources/jobs.yml ->
+# task `create_schemas`) rather than as bundle `schemas:` resources, so the
+# bundle deploys cleanly regardless of catalog-creation privileges.
+resources: {}

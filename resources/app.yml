@@ -1,0 +1,22 @@
+# Databricks App resource — the "Assessment Analytics Portal" (Streamlit).
+#
+# The app reads gold via a serverless SQL warehouse, calls the Claude Sonnet
+# serving endpoint (through the synopsis agent / ai_query), and embeds the
+# Genie space. Deploy the source from src/app.
+resources:
+  apps:
+    momentum_claims_portal:
+      name: momentum-claims-portal
+      description: "Momentum Life — Assessment Analytics Portal (claims processing copilot)."
+      source_code_path: ../src/app
+      resources:
+        - name: sql_warehouse
+          description: Serverless warehouse for gold reads, dashboards and Genie.
+          sql_warehouse:
+            id: ${var.warehouse_id}
+            permission: CAN_USE
+        - name: llm
+          description: Claude Sonnet serving endpoint (fronted by AI Gateway) for the synopsis agent.
+          serving_endpoint:
+            name: ${var.llm_endpoint}
+            permission: CAN_QUERY

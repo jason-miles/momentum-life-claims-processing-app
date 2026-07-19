@@ -1,0 +1,19 @@
+# Model Serving — Claude Sonnet foundation endpoint + AI Gateway.
+#
+# The Synopsis Agent calls Claude Sonnet through a Databricks Model Serving
+# endpoint fronted by AI Gateway (rate-limiting, request/response logging,
+# guardrails). On the demo workspace this is the pre-provisioned foundation
+# endpoint `databricks-claude-sonnet-4-6` (var.llm_endpoint); a production
+# deploy would create a dedicated AI-Gateway-fronted route pinned to an approved
+# region (eu-west-1) — see docs/05_DEPLOYMENT.md (US1.3, residency).
+#
+# The agent itself (ml_claims_synopsis_agent) is logged to MLflow and can be
+# served as its own endpoint via src/ai/agents/synopsis_agent.py; for the demo
+# the app calls the agent in-process / via ai_query against the FM endpoint,
+# which keeps the demo cheap (scale-to-zero) and legible.
+#
+#   foundation endpoint: ${var.llm_endpoint}   (databricks-claude-sonnet-4-6)
+#   embedding endpoint:  ${var.embedding_endpoint}  (databricks-gte-large-en)
+#   agent endpoint:      ml_claims_synopsis_agent   [MVP, optional serve]
+#   AI Gateway:          rate-limit + usage logging + guardrails (prod)
+resources: {}

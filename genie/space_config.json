@@ -1,0 +1,38 @@
+{
+  "space_id": "01f18397532a1ba0b35d2e530bd1691a",
+  "display_name": "Momentum Claims Analyst",
+  "warehouse_id": "dcb1c3dd8d1570d6",
+  "description": "Natural-language analytics over the Momentum Life claims gold layer.",
+  "catalog": "elexon_app_for_settlement_acc_catalog",
+  "schema": "momentum_claims_gold",
+  "curated_tables": [
+    "elexon_app_for_settlement_acc_catalog.momentum_claims_gold.claim_synopsis_view",
+    "elexon_app_for_settlement_acc_catalog.momentum_claims_gold.ntu_funnel",
+    "elexon_app_for_settlement_acc_catalog.momentum_claims_gold.ntu_at_risk",
+    "elexon_app_for_settlement_acc_catalog.momentum_claims_gold.ops_metrics",
+    "elexon_app_for_settlement_acc_catalog.momentum_claims_gold.decision_split",
+    "elexon_app_for_settlement_acc_catalog.momentum_claims_gold.requirement_analytics"
+  ],
+  "glossary": {
+    "NTU": "Not Taken Up. A claim that was initiated (pre-lodge) but dropped off before formal lodgement. Tracked via the is_ntu flag and the ntu_funnel / ntu_at_risk views.",
+    "SLA": "Service Level Agreement target of 20 days from lodge to decision. sla_breach = true when days_lodge_to_decision > 20.",
+    "occupation_mismatch": "The occupation recorded at policy inception (occupation_at_inception) differs from the occupation stated at claim (occupation_at_claim). A disability-claim red flag that can affect claimability.",
+    "claim states": "initiated (pre-lodge), lodged, in_assessment, decided. NTU claims never progress past initiated.",
+    "decision": "The assessment outcome: pay, decline or refer. Blank/null means not yet decided.",
+    "drop_off_propensity": "0-1 score in ntu_at_risk blending days-outstanding (60%) and outstanding-requirement count (40%); higher = more likely to become NTU.",
+    "risk_score": "0-1 fraud/risk indicator on each claim; > 0.6 is treated as high-risk in the app.",
+    "sum_assured": "Benefit amount in South African Rand (ZAR / R)."
+  },
+  "sample_questions": [
+    "Which claims have an occupation mismatch?",
+    "Show me pre-lodge claims at risk of drop-off, sorted by propensity",
+    "What is the average cycle time for disability claims?",
+    "How many claims breached the 20-day SLA?",
+    "What is the NTU rate by claim type?",
+    "Show the decision split (pay / decline / refer) for death claims",
+    "Which requirement codes are most often outstanding?",
+    "Which assessor has the highest throughput?",
+    "List claims with a risk score above 0.6",
+    "How many claims are in each state by claim type?"
+  ]
+}

@@ -1,0 +1,23 @@
+# Vector Search — endpoint + document index.
+#
+# The spec asks for a dedicated endpoint `ml_claims_vs` with three Delta-sync
+# indexes (idx_documents, idx_email, idx_notes). On the demo workspace we reuse
+# the existing ONLINE endpoint (var.vs_endpoint) to avoid a 15-minute cold
+# provision; the indexes live in the `momentum_claims_ai` schema and are built
+# by src/ai/build_indexes.py (invoked from the build job).
+#
+# Vector Search endpoints/indexes are not first-class DAB resource types in this
+# CLI, so they are created imperatively in build_indexes.py. This file documents
+# the intended topology and is the place to add native resources when the CLI
+# supports them.
+#
+#   endpoint: ${var.vs_endpoint}           (STANDARD, ONLINE)
+#   index:    momentum_claims_ai.idx_documents
+#             - primary_key: doc_id
+#             - embedding_source_column: chunk_text
+#             - embedding_model: ${var.embedding_endpoint}   (databricks-gte-large-en)
+#             - pipeline_type: TRIGGERED
+#             - metadata columns synced: claim_no, doc_type   (filter by claim_no)
+#   index:    momentum_claims_ai.idx_email      [DEMO]
+#   index:    momentum_claims_ai.idx_notes      [DEMO]
+resources: {}
