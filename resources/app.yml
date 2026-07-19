@@ -23,5 +23,6 @@ resources:
         - name: genie_space
           description: Genie space "Momentum Claims Analyst" — the app SP must be able to run it (AI Copilot + Exec pages).
           genie_space:
-            id: ${var.genie_space_id}
+            name: Momentum Claims Analyst
+            space_id: ${var.genie_space_id}
             permission: CAN_RUN
