@@ -70,7 +70,10 @@ def _header():
     logo_path = next((p for p in logo_candidates if p.exists()), None)
     with c1:
         if logo_path:
-            st.image(str(logo_path), use_container_width=True)
+            # use_column_width is supported across all Streamlit versions in the
+            # Databricks Apps runtime; use_container_width is not accepted by
+            # st.image on the deployed runtime and crashes app init.
+            st.image(str(logo_path), use_column_width=True)
         else:
             st.markdown(
                 f"<div style='font-size:2rem'>🛡️</div>", unsafe_allow_html=True
