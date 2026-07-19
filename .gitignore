@@ -6,3 +6,6 @@ node_modules/
 dist/
 .databricks/
 *.egg-info/
+src/app_react/frontend/node_modules/
+src/app_react/frontend/dist/
+src/app_react/webroot/

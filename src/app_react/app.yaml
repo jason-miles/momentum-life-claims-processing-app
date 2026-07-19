@@ -1,0 +1,25 @@
+command:
+  - "uvicorn"
+  - "app:app"
+  - "--host"
+  - "0.0.0.0"
+  - "--port"
+  - "8000"
+
+env:
+  - name: MOMENTUM_CATALOG
+    value: "elexon_app_for_settlement_acc_catalog"
+  - name: MOMENTUM_GOLD_SCHEMA
+    value: "momentum_claims_gold"
+  - name: MOMENTUM_SILVER_SCHEMA
+    value: "momentum_claims_silver"
+  - name: MOMENTUM_OPS_SCHEMA
+    value: "momentum_claims_ops"
+  - name: MOMENTUM_AI_SCHEMA
+    value: "momentum_claims_ai"
+  - name: DATABRICKS_WAREHOUSE_ID
+    value: "dcb1c3dd8d1570d6"
+  - name: GENIE_SPACE_ID
+    value: "01f18397532a1ba0b35d2e530bd1691a"
+  - name: MOMENTUM_LLM_ENDPOINT
+    value: "databricks-claude-sonnet-4-6"
