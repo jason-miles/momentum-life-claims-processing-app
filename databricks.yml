@@ -44,7 +44,28 @@ targets:
     default: true
     workspace:
       # Host is set per-machine via `databricks bundle deploy -t demo -p <profile>`
-      # or the DATABRICKS_HOST env var. Must be a eu-west-1 (Ireland) workspace.
+      # or the DATABRICKS_HOST env var. Current demo workspace is US (synthetic
+      # data only — residency binds production, not this synthetic demo).
+      root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+    run_as:
+      user_name: ${workspace.current_user.userName}
+
+  # Residency-compliant production target. Deploy against a eu-west-1 (Ireland)
+  # workspace: `databricks bundle deploy -t prod -p <eu-west-1-profile>`.
+  # See docs/PRODUCTION_DEPLOY.md for the full migration runbook, incl. the
+  # catalog re-point (scripts/retarget_sql.py) and in-region Claude serving check.
+  prod:
+    mode: production
+    variables:
+      # On a workspace WITH CREATE CATALOG rights, use a dedicated catalog with
+      # clean schema names (bronze/silver/gold/ai/ops) instead of co-located ones.
+      catalog: momentum_claims_demo
+      approved_region: eu-west-1
+      # Provision a dedicated VS endpoint in-region rather than reusing the demo one.
+      vs_endpoint: ml_claims_vs
+      warehouse_id: ""        # set to the eu-west-1 serverless warehouse id
+      genie_space_id: ""      # set after creating the prod Genie space
+    workspace:
       root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
     run_as:
       user_name: ${workspace.current_user.userName}

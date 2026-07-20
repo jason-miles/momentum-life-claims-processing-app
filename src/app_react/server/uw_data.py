@@ -11,11 +11,14 @@ from server.sql_client import run_query, ConnectionUnavailable
 
 log = logging.getLogger("momentum.uw")
 
-CAT = "elexon_app_for_settlement_acc_catalog"
-G = f"{CAT}.momentum_uw_gold"
-S = f"{CAT}.momentum_uw_silver"
-AI = f"{CAT}.momentum_uw_ai"
-LLM = "databricks-claude-sonnet-4-6"
+import os
+
+# Env-driven for portability (prod re-point). Defaults = demo co-located layout.
+CAT = os.environ.get("MOMENTUM_CATALOG", "elexon_app_for_settlement_acc_catalog")
+G = f"{CAT}." + os.environ.get("MOMENTUM_UW_GOLD_SCHEMA", "momentum_uw_gold")
+S = f"{CAT}." + os.environ.get("MOMENTUM_UW_SILVER_SCHEMA", "momentum_uw_silver")
+AI = f"{CAT}." + os.environ.get("MOMENTUM_UW_AI_SCHEMA", "momentum_uw_ai")
+LLM = os.environ.get("MOMENTUM_LLM_ENDPOINT", "databricks-claude-sonnet-4-6")
 
 
 def _safe(sql: str, params: dict | None = None) -> list[dict]:
