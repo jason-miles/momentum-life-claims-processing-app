@@ -1,11 +1,30 @@
 # Session Handoff — Momentum Life Claims Processing App
 
-**Last updated:** 2026-07-19 (evening session)
+**Last updated:** 2026-07-20 (React rebrand complete + deployed + verified)
 **Pick-up owner:** Jason Miles
 **Repo (local):** `/Users/jason.miles/vibe-coding-repos/Momentum/momentum-claims-demo`
 **GitHub:** https://github.com/jason-miles/momentum-life-claims-processing-app (PUBLIC)
 **Workspace:** `elexon` / `fevm-elexon-app-for-settlement-acc` (id 7474654808133980), CLI profile `elexon`
 **Validation session:** with Jurgens Krynauw — was targeted for 2026-07-20.
+
+---
+
+## ✅ UPDATE (2026-07-20): React rebrand is DONE, deployed & verified
+
+The Streamlit frontend has been **fully replaced by a Momentum-branded
+React + FastAPI app** (`src/app_react/`), deployed to `momentum-claims-portal`
+and **verified live in-browser — all 7 pages render with live data, no console
+errors**:
+- Navy (#14205a) sidebar + pill nav + "View as" role switcher; Poppins/Inter; pill buttons.
+- Claim Detail (CLM-DISAB-DISCREP) confirmed: occupation mismatch in RED
+  (Clerk ≠ Boilermaker), 4/5 reqs with REQ-SPECIALIST outstanding, timeline,
+  docs, AI synopsis card + copilot, mocked fraud score 0.34, action buttons.
+- Live data confirmed (603 claims; exec KPIs 13.8d / 17.3% / 75.7%).
+- Two deploy bugs found & fixed: (a) `webroot/` was gitignored so `databricks
+  sync` skipped the built UI → un-ignored it; (b) nested-route MIME error →
+  vite `base` `'./'`→`'/'` (absolute asset paths).
+- `resources/app.yml` now points `source_code_path` at `../src/app_react`; bundle validates.
+- **Only remaining action: `git push` (still permission-gated) — ~12 commits local.**
 
 ---
 
