@@ -3,6 +3,7 @@ import { NavLink, Route, Routes } from 'react-router-dom'
 import { RoleProvider, useRole, ROLES, type Role } from './lib/roleContext'
 import { useApi } from './lib/useApi'
 import { api } from './lib/api'
+import Overview from './pages/Overview'
 import Inbox from './pages/Inbox'
 import ClaimDetail from './pages/ClaimDetail'
 import Copilot from './pages/Copilot'
@@ -25,6 +26,13 @@ interface NavItem {
 
 /* Inline stroke icons — 1.75px, currentColor, 18px grid (Lucide-style). */
 const I = {
+  home: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 10.5 12 3l9 7.5" />
+      <path d="M5 9.5V21h14V9.5" />
+      <path d="M9 21v-6h6v6" />
+    </svg>
+  ),
   exec: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
       <path d="M3 3v16a2 2 0 0 0 2 2h16" />
@@ -87,6 +95,10 @@ interface NavGroup {
 
 const NAV_GROUPS: NavGroup[] = [
   {
+    label: 'Overview',
+    items: [{ to: '/', label: 'Executive Overview', icon: I.home }],
+  },
+  {
     label: 'Co-Pilots',
     items: [
       { to: '/underwriting', label: 'Underwriting Co-Pilot', icon: I.uw },
@@ -104,7 +116,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Claims',
     items: [
       { to: '/exec', label: 'Executive View', icon: I.exec },
-      { to: '/', label: 'Claims Inbox', icon: I.inbox },
+      { to: '/inbox', label: 'Claims Inbox', icon: I.inbox },
       { to: '/ntu', label: 'NTU / Ops', icon: I.ntu },
       { to: '/fraud', label: 'Fraud Workbench', icon: I.fraud },
     ],
@@ -202,7 +214,8 @@ function Shell() {
           </div>
         </header>
         <Routes>
-          <Route path="/" element={<Inbox />} />
+          <Route path="/" element={<Overview />} />
+          <Route path="/inbox" element={<Inbox />} />
           <Route path="/claim/:claimNo" element={<ClaimDetail />} />
           <Route path="/copilot" element={<Copilot />} />
           <Route path="/ntu" element={<NtuOps />} />

@@ -24,7 +24,7 @@ export default function ClaimDetail() {
     <main className="page">
       <div className="page-head between">
         <div>
-          <Link to="/" className="small muted">
+          <Link to="/inbox" className="small muted">
             ← Claims Inbox
           </Link>
           <h1>{claimNo}</h1>
