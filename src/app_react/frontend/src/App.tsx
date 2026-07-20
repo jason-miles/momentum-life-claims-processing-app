@@ -21,7 +21,6 @@ interface NavItem {
   to: string
   label: string
   icon: ReactNode
-  roles?: Role[]
 }
 
 /* Inline stroke icons — 1.75px, currentColor, 18px grid (Lucide-style). */

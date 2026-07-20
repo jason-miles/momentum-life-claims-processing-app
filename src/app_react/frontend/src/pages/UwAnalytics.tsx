@@ -110,8 +110,8 @@ export default function UwAnalytics() {
                         <td><strong>{c.policy_no}</strong></td>
                         <td>{zar(c.sum_at_risk)}</td>
                         <td>{c.days_req_outstanding}</td>
-                        <td style={{ color: c.ntu_propensity >= 0.6 ? RED : NAVY, fontWeight: 600 }}>
-                          {(c.ntu_propensity * 100).toFixed(0)}%
+                        <td style={{ color: Number(c.ntu_propensity ?? 0) >= 0.6 ? RED : NAVY, fontWeight: 600 }}>
+                          {(Number(c.ntu_propensity ?? 0) * 100).toFixed(0)}%
                         </td>
                       </tr>
                     ))}
@@ -153,6 +153,14 @@ export default function UwAnalytics() {
       </Async>
     </Page>
   )
+}
+
+/* Render a Genie result cell — JSON-stringify objects so nested struct/array
+   columns don't render as "[object Object]". */
+function fmtCell(v: unknown): string {
+  if (v == null) return ''
+  if (typeof v === 'object') return JSON.stringify(v)
+  return String(v)
 }
 
 const UW_SUGGESTS = [
@@ -211,7 +219,7 @@ function UwGenieAsk() {
                     <thead><tr>{cols.map((c) => <th key={c}>{c}</th>)}</tr></thead>
                     <tbody>
                       {res.rows.slice(0, 25).map((row, i) => (
-                        <tr key={i}>{cols.map((c) => <td key={c}>{String(row[c] ?? '')}</td>)}</tr>
+                        <tr key={i}>{cols.map((c) => <td key={c}>{fmtCell(row[c])}</td>)}</tr>
                       ))}
                     </tbody>
                   </table>

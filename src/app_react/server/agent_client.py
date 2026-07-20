@@ -200,7 +200,11 @@ def _similar_claims(row: dict, exclude: str) -> list[dict]:
     ctype = row.get("claim_type") or ""
     occ = row.get("occupation_at_claim") or ""
     query = f"{ctype} claim occupation {occ} " + (row.get("outstanding_codes") or "")
-    q = query.replace("'", "''")
+    # A Vector Search table-valued function argument cannot be bound as a query
+    # parameter, and quote-doubling is defeated by Spark backslash-escaping, so
+    # allowlist the search text to a safe charset (letters/digits/space) — this
+    # is a semantic query string, so dropping punctuation costs nothing.
+    q = _vs_safe(query)
     try:
         rows = run_query(
             f"SELECT claim_no, doc_type, chunk_text, score "
@@ -209,6 +213,14 @@ def _similar_claims(row: dict, exclude: str) -> list[dict]:
         return rows or []
     except Exception:
         return []
+
+
+def _vs_safe(text: str) -> str:
+    """Allowlist a Vector Search query string to letters/digits/space (max 200
+    chars). Strips quotes, backslashes and all other punctuation so it can be
+    safely interpolated into a `search_*('...')` UC-function call."""
+    import re
+    return re.sub(r"[^A-Za-z0-9 ]", " ", str(text or ""))[:200].strip()
 
 
 def ask_claim_copilot(claim_no: str, question: str) -> str:

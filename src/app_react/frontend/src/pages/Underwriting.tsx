@@ -93,7 +93,7 @@ function CaseBody({ policyNo, detail }: { policyNo: string; detail: UwCaseDetail
             <dt>Sum at risk</dt><dd><strong>{zar(r.sum_at_risk)}</strong> ({r.sar_band})</dd>
             <dt>Life</dt><dd>Age {r.age} · {r.occupation_class} · {r.smoker_flag ? 'smoker' : 'non-smoker'}</dd>
             <dt>Risk score</dt><dd>{r.risk_score != null ? Number(r.risk_score).toFixed(2) : '—'}</dd>
-            <dt>Channel</dt><dd>{r.channel as string} · {r.broker as string}</dd>
+            <dt>Channel</dt><dd>{[r.channel, r.broker].filter(Boolean).join(' · ') || '—'}</dd>
             <dt>Underwriter</dt><dd>{r.underwriter}</dd>
             <dt>Decision</dt>
             <dd>

@@ -21,6 +21,14 @@ AI = f"{CAT}." + os.environ.get("MOMENTUM_UW_AI_SCHEMA", "momentum_uw_ai")
 LLM = os.environ.get("MOMENTUM_LLM_ENDPOINT", "databricks-claude-sonnet-4-6")
 
 
+def _vs_safe(text: str) -> str:
+    """Allowlist a Vector Search query string to letters/digits/space (max 200
+    chars). A VS table-valued function argument can't be bound as a query param,
+    so strip quotes/backslashes/punctuation to make interpolation injection-safe."""
+    import re
+    return re.sub(r"[^A-Za-z0-9 ]", " ", str(text or ""))[:200].strip()
+
+
 def _safe(sql: str, params: dict | None = None) -> list[dict]:
     try:
         return run_query(sql, params)
@@ -112,14 +120,28 @@ def uw_synopsis(policy_no: str) -> dict:
                 "flags": [], "citations": [], "recommendation": "N/A", "source": "unavailable",
                 "similar_cases": []}
 
+    # Coerce the numeric fields used in comparisons/formatting to float up front,
+    # so a string-typed warehouse value can't raise a TypeError mid-synopsis
+    # (the flag block below is not otherwise guarded — see Isaac review #3).
+    def _num(v):
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            return 0.0
+    row["risk_score"] = _num(row.get("risk_score"))
+    row["ntu_propensity"] = _num(row.get("ntu_propensity"))
+
     # RAG: semantically-similar prior notepad cases via Vector Search (idx_uw_notes),
     # retrieved through the governed search_uw_notes UC function. Native re-build of
     # the pgvector POC (spec R2.2). Best-effort — never blocks the synopsis.
     similar = []
-    note_txt = " ".join(n.get("note_text", "") for n in detail["notes"])[:400]
-    if note_txt:
+    note_txt = " ".join(n.get("note_text", "") for n in detail["notes"])
+    # A VS table-valued function arg can't be bound and quote-doubling is beaten
+    # by Spark backslash-escaping, so allowlist the query text to letters/digits/
+    # space (this is stored notepad free text — a second-order injection source).
+    q = _vs_safe(note_txt)
+    if q:
         try:
-            q = note_txt.replace("'", "''")
             rows = run_query(
                 f"SELECT policy_no, chunk_text, score FROM {AI}.search_uw_notes('{q}') "
                 f"WHERE policy_no <> :p ORDER BY score DESC LIMIT 3", {"p": policy_no})

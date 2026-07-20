@@ -61,9 +61,9 @@ def ask_genie(question: str, conversation_id: str | None = None,
                 desc = getattr(query_att, "description", None)
                 if desc:
                     texts.append(desc)
-                sid = getattr(query_att, "statement_id", None)
-                if sid:
-                    rows = _attachment_rows(w, sid)
+                stmt_id = getattr(query_att, "statement_id", None)
+                if stmt_id:
+                    rows = _attachment_rows(w, stmt_id)
                     if rows is not None:
                         out["rows"] = rows
 

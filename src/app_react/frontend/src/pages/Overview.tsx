@@ -16,6 +16,14 @@ export default function Overview() {
   const pct = (v: number | null | undefined) => (v != null ? (v * 100).toFixed(1) : '—')
   const day = (v: number | null | undefined) => (v != null ? v.toFixed(1) : '—')
 
+  // Per-domain status so a warehouse outage reads as an outage, not real zeros.
+  const statusNote = (s: { loading: boolean; error: string | null }) =>
+    s.loading ? (
+      <span className="small muted">loading…</span>
+    ) : s.error ? (
+      <span className="pill pill-bad">⚠ couldn’t reach Databricks</span>
+    ) : null
+
   return (
     <Page
       title="Executive Overview"
@@ -25,7 +33,12 @@ export default function Overview() {
         {/* Underwriting */}
         <Card
           title="Underwriting — new business"
-          right={<Link to="/uw-exec" className="btn btn-outline btn-sm">Open →</Link>}
+          right={
+            <span className="chip-row" style={{ alignItems: 'center' }}>
+              {statusNote(uw)}
+              <Link to="/uw-exec" className="btn btn-outline btn-sm">Open →</Link>
+            </span>
+          }
         >
           <div className="kpi-grid">
             <Kpi label="Straight-through" value={pct(u?.stp_rate)} unit="%" foot="fast-track + tele" />
@@ -41,7 +54,12 @@ export default function Overview() {
         {/* Claims */}
         <Card
           title="Claims — assessment"
-          right={<Link to="/exec" className="btn btn-outline btn-sm">Open →</Link>}
+          right={
+            <span className="chip-row" style={{ alignItems: 'center' }}>
+              {statusNote(claims)}
+              <Link to="/exec" className="btn btn-outline btn-sm">Open →</Link>
+            </span>
+          }
         >
           <div className="kpi-grid">
             <Kpi label="Avg cycle time" value={day(cx?.kpis?.cycle_time_days)} unit="days" foot="lodge → decision" />
