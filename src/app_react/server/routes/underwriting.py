@@ -2,10 +2,23 @@
 from __future__ import annotations
 
 from fastapi import APIRouter
+from pydantic import BaseModel
 
 from server import uw_data
+from server.genie_client import ask_genie
+from server.config import UW_GENIE_SPACE_ID
 
 router = APIRouter(prefix="/api/uw")
+
+
+class UwGenieIn(BaseModel):
+    question: str
+    conversation_id: str | None = None
+
+
+@router.post("/genie")
+def genie(body: UwGenieIn):
+    return ask_genie(body.question, body.conversation_id, space_id=UW_GENIE_SPACE_ID)
 
 
 @router.get("/inbox")

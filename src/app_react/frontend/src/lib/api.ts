@@ -316,4 +316,6 @@ export const api = {
   uwNtu: () => get<UwNtu>('/api/uw/ntu'),
   uwRequirements: () => get<{ analytics: UwReqAnalytic[] }>('/api/uw/requirements'),
   uwOps: () => get<{ ops: UwOpsRow[] }>('/api/uw/ops'),
+  uwGenie: (question: string, conversation_id?: string) =>
+    post<GenieResponse>('/api/uw/genie', { question, conversation_id }),
 }

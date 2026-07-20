@@ -21,5 +21,7 @@ env:
     value: "dcb1c3dd8d1570d6"
   - name: GENIE_SPACE_ID
     value: "01f18397532a1ba0b35d2e530bd1691a"
+  - name: UW_GENIE_SPACE_ID
+    value: "01f184232e3012439e84ae6cab552b1e"
   - name: MOMENTUM_LLM_ENDPOINT
     value: "databricks-claude-sonnet-4-6"

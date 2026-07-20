@@ -27,13 +27,15 @@ def _attachment_rows(w, statement_id: str) -> list[dict] | None:
         return None
 
 
-def ask_genie(question: str, conversation_id: str | None = None) -> dict:
+def ask_genie(question: str, conversation_id: str | None = None,
+              space_id: str | None = None) -> dict:
     out = {
         "ok": False, "text": "", "sql": "", "rows": None,
         "conversation_id": conversation_id, "error": "",
     }
-    if not GENIE_SPACE_ID:
-        out["error"] = "GENIE_SPACE_ID is not configured."
+    sid = space_id or GENIE_SPACE_ID
+    if not sid:
+        out["error"] = "Genie space id is not configured."
         return out
 
     try:
@@ -41,9 +43,9 @@ def ask_genie(question: str, conversation_id: str | None = None) -> dict:
         genie = w.genie
 
         if conversation_id:
-            msg = genie.create_message_and_wait(GENIE_SPACE_ID, conversation_id, question)
+            msg = genie.create_message_and_wait(sid, conversation_id, question)
         else:
-            msg = genie.start_conversation_and_wait(GENIE_SPACE_ID, question)
+            msg = genie.start_conversation_and_wait(sid, question)
             conversation_id = getattr(msg, "conversation_id", None)
 
         out["conversation_id"] = conversation_id

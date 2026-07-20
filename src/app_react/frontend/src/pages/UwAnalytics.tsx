@@ -1,8 +1,9 @@
+import { useState } from 'react'
 import {
   Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart,
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
-import { api, type UwExec, type UwNtu } from '../lib/api'
+import { api, type UwExec, type UwNtu, type GenieResponse } from '../lib/api'
 import { useApi } from '../lib/useApi'
 import { zar } from '../lib/format'
 import { Page, Card, Async, Kpi, labelize } from '../components/ui'
@@ -25,6 +26,8 @@ export default function UwAnalytics() {
 
   return (
     <Page title="Underwriting Analytics" sub="Journey split · decision split · NTU drop-off · requirements — governed, no per-seat licence">
+      <UwGenieAsk />
+      <div className="mt-lg" />
       <Async state={ex} empty="No underwriting data">
         {(e: UwExec) => (
           <>
@@ -149,5 +152,78 @@ export default function UwAnalytics() {
         )}
       </Async>
     </Page>
+  )
+}
+
+const UW_SUGGESTS = [
+  'Which open cases set requirements over 14 days ago with no result returned, ranked by sum at risk?',
+  'What percentage of applications go straight-through?',
+  'Break down NTU by composition bucket',
+  'Which requirement type has the lowest return rate?',
+  'What is the average turnaround by journey type?',
+]
+
+function UwGenieAsk() {
+  const [q, setQ] = useState('')
+  const [res, setRes] = useState<GenieResponse | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [conv, setConv] = useState<string | undefined>(undefined)
+
+  async function ask(question: string) {
+    const question2 = question.trim()
+    if (!question2 || busy) return
+    setBusy(true)
+    setRes(null)
+    try {
+      const r = await api.uwGenie(question2, conv)
+      if (r.conversation_id) setConv(r.conversation_id)
+      setRes(r)
+    } catch {
+      setRes({ ok: false, error: 'Genie unavailable.' })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const cols = res?.rows && res.rows.length > 0 ? Object.keys(res.rows[0]) : []
+  return (
+    <Card title="Ask the Underwriting Analyst" sub="Natural-language Q&A over the underwriting book — powered by Genie">
+      <div className="suggest-chips">
+        {UW_SUGGESTS.map((s) => (
+          <button key={s} className="chip" onClick={() => ask(s)} disabled={busy}>{s}</button>
+        ))}
+      </div>
+      <div className="chat-input">
+        <input className="input" placeholder="Ask about journeys, NTU, requirements, SLA…"
+               value={q} onChange={(e) => setQ(e.target.value)}
+               onKeyDown={(e) => e.key === 'Enter' && ask(q)} />
+        <button className="btn btn-primary" onClick={() => ask(q)} disabled={busy}>Ask</button>
+      </div>
+      {busy && <p className="muted small mt">Thinking…</p>}
+      {res && !busy && (
+        <div className="msg bot mt">
+          {res.ok ? (
+            <>
+              {res.text && <div style={{ marginBottom: res.rows?.length ? 12 : 0 }}>{res.text}</div>}
+              {res.rows && res.rows.length > 0 && (
+                <div className="table-wrap">
+                  <table className="tabular">
+                    <thead><tr>{cols.map((c) => <th key={c}>{c}</th>)}</tr></thead>
+                    <tbody>
+                      {res.rows.slice(0, 25).map((row, i) => (
+                        <tr key={i}>{cols.map((c) => <td key={c}>{String(row[c] ?? '')}</td>)}</tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              {res.sql && <details className="sql-block"><summary>Generated SQL</summary><pre>{res.sql}</pre></details>}
+            </>
+          ) : (
+            <span>{res.error || 'No answer.'}</span>
+          )}
+        </div>
+      )}
+    </Card>
   )
 }
