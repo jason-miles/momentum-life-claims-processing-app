@@ -5,16 +5,28 @@ API stays up and the UI can show a friendly "connect to Databricks" state.
 """
 from __future__ import annotations
 
+import logging
+
 from server.config import g, s, RISK_THRESHOLD
 from server.sql_client import run_query, ConnectionUnavailable
 
+log = logging.getLogger("momentum.data")
 
-def _safe(sql: str) -> list[dict]:
+
+def _safe(sql: str, params: dict | None = None) -> list[dict]:
+    """Run a read query, returning [] on failure so the UI degrades gracefully.
+
+    Failures are logged (not silently swallowed) so an operator can tell
+    "not connected" from "query failed / schema drift" — an empty portal
+    should never hide a real error.
+    """
     try:
-        return run_query(sql)
-    except ConnectionUnavailable:
+        return run_query(sql, params)
+    except ConnectionUnavailable as exc:
+        log.warning("warehouse unavailable: %s", exc)
         return []
     except Exception:
+        log.exception("query failed: %s", sql.strip().split("\n")[0][:120])
         return []
 
 
@@ -34,23 +46,27 @@ def claims_inbox() -> list[dict]:
 
 
 def claim_detail(claim_no: str) -> dict:
-    safe_no = claim_no.replace("'", "''")
-    row = _safe(f"SELECT * FROM {g('claim_synopsis_view')} WHERE claim_no = '{safe_no}'")
+    p = {"claim_no": claim_no}
+    row = _safe(f"SELECT * FROM {g('claim_synopsis_view')} WHERE claim_no = :claim_no", p)
     reqs = _safe(
         f"""SELECT code, description, status, requested_ts, received_ts
-            FROM {s('requirement')} WHERE claim_no = '{safe_no}' ORDER BY status DESC, code"""
+            FROM {s('requirement')} WHERE claim_no = :claim_no ORDER BY status DESC, code""",
+        p,
     )
     docs = _safe(
         f"""SELECT doc_id, doc_type, filenet_ref, parsed_text
-            FROM {s('document')} WHERE claim_no = '{safe_no}' ORDER BY doc_id"""
+            FROM {s('document')} WHERE claim_no = :claim_no ORDER BY doc_id""",
+        p,
     )
     events = _safe(
         f"""SELECT event, event_ts FROM {s('claim_event')}
-            WHERE claim_no = '{safe_no}' ORDER BY event_ts"""
+            WHERE claim_no = :claim_no ORDER BY event_ts""",
+        p,
     )
     tps = _safe(
         f"""SELECT source, result_summary, checked_ts FROM {s('tp_verification')}
-            WHERE claim_no = '{safe_no}' ORDER BY source"""
+            WHERE claim_no = :claim_no ORDER BY source""",
+        p,
     )
     return {
         "row": (row[0] if row else None),

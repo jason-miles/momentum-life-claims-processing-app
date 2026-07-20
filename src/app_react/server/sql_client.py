@@ -9,12 +9,15 @@ loads don't re-hit the warehouse.
 """
 from __future__ import annotations
 
+import logging
 import os
 import threading
 import time
 from functools import lru_cache
 
 from server.config import WAREHOUSE_ID
+
+log = logging.getLogger("momentum.sql")
 
 
 class ConnectionUnavailable(RuntimeError):
@@ -67,7 +70,10 @@ def _connect():
                 credentials_provider=credential_provider,
             )
         except Exception:
-            pass
+            # Log rather than swallow: in the deployed app the SP OAuth path is
+            # the intended identity; a silent fall-through to a default profile
+            # would mask a misconfiguration behind confusing downstream errors.
+            log.warning("SP OAuth connect failed; falling back to SDK default", exc_info=True)
 
     try:
         from databricks.sdk import WorkspaceClient
@@ -91,27 +97,41 @@ def _connect():
         )
 
 
-# --- tiny in-process TTL cache ------------------------------------------------
-_CACHE: dict[str, tuple[float, list[dict]]] = {}
+# --- tiny in-process TTL cache (bounded) --------------------------------------
+_CACHE: "OrderedDict[str, tuple[float, list[dict]]]" = None  # type: ignore[assignment]
+from collections import OrderedDict  # noqa: E402
+
+_CACHE = OrderedDict()
 _CACHE_LOCK = threading.Lock()
 _TTL = 60.0
+_CACHE_MAX = 512  # cap entries so a long-lived process can't grow unbounded
 
 
-def run_query(sql: str, use_cache: bool = True) -> list[dict]:
+def _cache_key(sql: str, params: dict | None) -> str:
+    return sql if not params else sql + "\x00" + repr(sorted(params.items()))
+
+
+def run_query(
+    sql: str, params: dict | None = None, use_cache: bool = True
+) -> list[dict]:
     """Execute a read query and return a list of row dicts (cached ~60s).
 
-    Raises ``ConnectionUnavailable`` if the warehouse cannot be reached.
+    ``params`` are bound via the connector's native parameter markers (``:name``)
+    — NEVER interpolate untrusted values into ``sql`` yourself. Raises
+    ``ConnectionUnavailable`` if the warehouse cannot be reached.
     """
+    key = _cache_key(sql, params)
     if use_cache:
         with _CACHE_LOCK:
-            hit = _CACHE.get(sql)
+            hit = _CACHE.get(key)
             if hit and (time.time() - hit[0]) < _TTL:
+                _CACHE.move_to_end(key)
                 return hit[1]
 
     conn = _connect()
     try:
         with conn.cursor() as cur:
-            cur.execute(sql)
+            cur.execute(sql, params or None)
             rows = cur.fetchall()
             cols = [d[0] for d in cur.description] if cur.description else []
         out = [dict(zip(cols, [_json_safe(v) for v in r])) for r in rows]
@@ -123,16 +143,23 @@ def run_query(sql: str, use_cache: bool = True) -> list[dict]:
 
     if use_cache:
         with _CACHE_LOCK:
-            _CACHE[sql] = (time.time(), out)
+            _CACHE[key] = (time.time(), out)
+            _CACHE.move_to_end(key)
+            while len(_CACHE) > _CACHE_MAX:
+                _CACHE.popitem(last=False)  # evict oldest (LRU)
     return out
 
 
-def execute(sql: str) -> None:
-    """Execute a write/DDL statement (not cached)."""
+def execute(sql: str, params: dict | None = None) -> None:
+    """Execute a write/DDL statement (not cached).
+
+    ``params`` are bound via the connector (``:name`` markers). Do not
+    interpolate untrusted values into ``sql``.
+    """
     conn = _connect()
     try:
         with conn.cursor() as cur:
-            cur.execute(sql)
+            cur.execute(sql, params or None)
     finally:
         try:
             conn.close()

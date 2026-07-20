@@ -49,6 +49,12 @@ function ClaimBody({ claimNo, detail }: { claimNo: string; detail: CD }) {
   const r = detail.row!
   const mismatch = !!r.occupation_mismatch
   const policyOk = r.policy_status === 'in_force'
+  // Defensive: coalesce collections in case the API returns null (no error
+  // boundary in the tree, so a null .map would white-screen the whole app).
+  const requirements = detail.requirements ?? []
+  const documents = detail.documents ?? []
+  const events = detail.events ?? []
+  const thirdParty = detail.third_party ?? []
 
   return (
     <>
@@ -117,7 +123,7 @@ function ClaimBody({ claimNo, detail }: { claimNo: string; detail: CD }) {
               </span>
             </div>
             <div className="checklist">
-              {detail.requirements.map((req) => {
+              {requirements.map((req) => {
                 const done = req.status === 'received'
                 return (
                   <div className="check-item" key={req.code}>
@@ -129,45 +135,45 @@ function ClaimBody({ claimNo, detail }: { claimNo: string; detail: CD }) {
                   </div>
                 )
               })}
-              {detail.requirements.length === 0 && <p className="muted small">No requirements recorded.</p>}
+              {requirements.length === 0 && <p className="muted small">No requirements recorded.</p>}
             </div>
           </div>
 
           <div className="mt">
             <div className="card-sub">Third-party verifications</div>
             <div className="chip-row">
-              {detail.third_party.map((t) => (
+              {thirdParty.map((t) => (
                 <Pill key={t.source} tone="info">
                   {t.source}: {t.result_summary || '—'}
                 </Pill>
               ))}
-              {detail.third_party.length === 0 && <span className="muted small">none recorded</span>}
+              {thirdParty.length === 0 && <span className="muted small">none recorded</span>}
             </div>
           </div>
 
           <div className="mt">
             <div className="card-sub">Timeline</div>
             <div className="timeline">
-              {detail.events.map((e, i) => (
+              {events.map((e, i) => (
                 <div className="tl-item" key={i}>
                   <div className="ev">{labelize(e.event)}</div>
                   <div className="ts">{fmtDateTime(e.event_ts)}</div>
                 </div>
               ))}
-              {detail.events.length === 0 && <p className="muted small">No events.</p>}
+              {events.length === 0 && <p className="muted small">No events.</p>}
             </div>
           </div>
 
           <div className="mt">
-            <div className="card-sub">Documents ({detail.documents.length})</div>
-            {detail.documents.map((doc) => (
+            <div className="card-sub">Documents ({documents.length})</div>
+            {documents.map((doc) => (
               <div className="doc-item" key={doc.doc_id}>
                 <span className="doc-ico">📎</span>
                 <span>{labelize(doc.doc_type)}</span>
                 <span className="doc-id">{doc.doc_id}</span>
               </div>
             ))}
-            {detail.documents.length === 0 && <p className="muted small">No documents.</p>}
+            {documents.length === 0 && <p className="muted small">No documents.</p>}
           </div>
         </Card>
 
@@ -199,24 +205,28 @@ function SynopsisPanel({ claimNo }: { claimNo: string }) {
 }
 
 function SynopsisBody({ s }: { s: Synopsis }) {
+  // Defensive: the real agent (ai.agents.synopsis_agent) may omit these arrays;
+  // there is no error boundary, so a null .length/.map would white-screen the app.
+  const discrepancies = s.discrepancies ?? []
+  const citations = s.citations ?? []
   return (
     <>
       <RecoLine recommendation={s.recommendation} />
-      {s.discrepancies.length > 0 && (
+      {discrepancies.length > 0 && (
         <div className="chip-row mt">
-          {s.discrepancies.map((d, i) => (
+          {discrepancies.map((d, i) => (
             <DiscrepancyBadge key={i} text={d} />
           ))}
         </div>
       )}
       <div className="mt">
-        <Markdown text={s.markdown} />
+        <Markdown text={s.markdown || ''} />
       </div>
-      {s.citations.length > 0 && (
+      {citations.length > 0 && (
         <div className="mt">
           <div className="card-sub">Sources</div>
           <div className="chip-row">
-            {s.citations.map((c, i) => (
+            {citations.map((c, i) => (
               <code key={i} className="chip">
                 [{c}]
               </code>
@@ -311,8 +321,13 @@ function ActionBar({ claimNo, riskScore }: { claimNo: string; riskScore: number 
   async function record(action: string) {
     setMsg('')
     const payload = JSON.stringify({ assignee, comment })
-    const res = await api.action(claimNo, role, action, payload)
-    setMsg(res.ok ? `✓ ${action} recorded` : `Could not record: ${res.error || 'error'}`)
+    try {
+      const res = await api.action(claimNo, role, action, payload)
+      setMsg(res.ok ? `✓ ${action} recorded` : `Could not record: ${res.error || 'error'}`)
+    } catch (e) {
+      // api.action throws on any non-2xx; surface it instead of a dead button.
+      setMsg(`Could not record: ${e instanceof Error ? e.message : 'request failed'}`)
+    }
   }
 
   return (
@@ -360,7 +375,14 @@ function ActionBar({ claimNo, riskScore }: { claimNo: string; riskScore: number 
             Record referral
           </button>
         </div>
-        {msg && <span className="small" style={{ color: 'var(--good)' }}>{msg}</span>}
+        {msg && (
+          <span
+            className="small"
+            style={{ color: msg.startsWith('✓') ? 'var(--good)' : 'var(--bad)' }}
+          >
+            {msg}
+          </span>
+        )}
       </div>
     </Card>
   )

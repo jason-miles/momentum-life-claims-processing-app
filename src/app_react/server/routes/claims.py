@@ -95,16 +95,29 @@ class ActionIn(BaseModel):
     payload: str | None = ""
 
 
+ALLOWED_ACTIONS = {"accept_synopsis", "edit_synopsis", "record_referral"}
+
+
 @router.post("/action")
 def record_action(body: ActionIn):
-    """Persist an Accept/Edit/Record-referral action to the ops audit table."""
-    safe = lambda x: (x or "").replace("'", "''")
+    """Persist an Accept/Edit/Record-referral action to the ops audit table.
+
+    All values are bound as query parameters (never interpolated), and the
+    action is checked against an allow-list.
+    """
+    if body.action not in ALLOWED_ACTIONS:
+        return {"ok": False, "error": f"unknown action '{body.action}'"}
     try:
         execute(
             f"INSERT INTO {o('app_events')} "
-            f"(event_id, claim_no, user_role, action, payload, ts) VALUES "
-            f"(uuid(), '{safe(body.claim_no)}', '{safe(body.user_role)}', "
-            f"'{safe(body.action)}', '{safe(body.payload)}', current_timestamp())"
+            "(event_id, claim_no, user_role, action, payload, ts) VALUES "
+            "(uuid(), :claim_no, :user_role, :action, :payload, current_timestamp())",
+            {
+                "claim_no": body.claim_no,
+                "user_role": body.user_role,
+                "action": body.action,
+                "payload": body.payload or "",
+            },
         )
         return {"ok": True}
     except Exception as exc:

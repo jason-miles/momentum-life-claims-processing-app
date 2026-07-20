@@ -65,7 +65,11 @@ export default function Fraud() {
                     </thead>
                     <tbody>
                       {ranked.slice(0, 25).map((c) => (
-                        <tr key={c.claim_no} className="claim-link" onClick={() => nav(`/claim/${c.claim_no}`)}>
+                        <tr
+                          key={c.claim_no}
+                          className="claim-link"
+                          onClick={() => nav(`/claim/${encodeURIComponent(c.claim_no)}`)}
+                        >
                           <td>
                             <strong>{c.claim_no}</strong>
                           </td>

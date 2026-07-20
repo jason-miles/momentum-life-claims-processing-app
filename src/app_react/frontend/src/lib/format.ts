@@ -15,13 +15,13 @@ export function zar(value: number | null | undefined): string {
 /** Readable date, e.g. 20 May 2026. Accepts ISO date / timestamp. */
 export function fmtDate(value: string | null | undefined): string {
   if (!value) return '—'
+  // Handle bare YYYY-MM-DD FIRST: `new Date('2026-05-20')` parses as UTC
+  // midnight, so getDate()/getMonth() (local time) shift it to the previous
+  // day in any negative-UTC timezone. Parse the components directly instead.
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(value)
+  if (m) return `${Number(m[3])} ${MONTHS[Number(m[2]) - 1]} ${m[1]}`
   const d = new Date(value)
-  if (Number.isNaN(d.getTime())) {
-    // Try bare YYYY-MM-DD
-    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(value)
-    if (m) return `${Number(m[3])} ${MONTHS[Number(m[2]) - 1]} ${m[1]}`
-    return String(value)
-  }
+  if (Number.isNaN(d.getTime())) return String(value)
   return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`
 }
 

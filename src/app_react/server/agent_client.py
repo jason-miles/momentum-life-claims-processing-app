@@ -17,8 +17,10 @@ from server.config import LLM_ENDPOINT, g
 def _fetch_claim_row(claim_no: str) -> dict | None:
     from server.sql_client import run_query
 
-    safe = claim_no.replace("'", "''")
-    rows = run_query(f"SELECT * FROM {g('claim_synopsis_view')} WHERE claim_no = '{safe}'")
+    rows = run_query(
+        f"SELECT * FROM {g('claim_synopsis_view')} WHERE claim_no = :claim_no",
+        {"claim_no": claim_no},
+    )
     return rows[0] if rows else None
 
 
@@ -117,9 +119,14 @@ def _ai_query_synopsis(row: dict) -> dict | None:
         "End with a single line 'Recommendation: <PAY|REFER|DECLINE|PEND>'.\n\n"
         f"CLAIM FACTS (JSON):\n{json.dumps(context, default=str)}"
     )
-    safe = prompt.replace("'", "''")
     try:
-        rows = run_query(f"SELECT ai_query('{LLM_ENDPOINT}', '{safe}') AS synopsis", use_cache=False)
+        # Bind BOTH the endpoint name and the prompt as parameters so no
+        # user/claim-derived text is ever interpolated into SQL syntax.
+        rows = run_query(
+            "SELECT ai_query(:endpoint, :prompt) AS synopsis",
+            {"endpoint": LLM_ENDPOINT, "prompt": prompt},
+            use_cache=False,
+        )
         if not rows:
             return None
         text = str(rows[0]["synopsis"])
@@ -182,9 +189,12 @@ def ask_claim_copilot(claim_no: str, question: str) -> str:
         "claim facts below. Be concise and cite fields you rely on. Amounts are ZAR (R).\n\n"
         f"CLAIM FACTS: {context}\n\nQUESTION: {question}"
     )
-    safe = prompt.replace("'", "''")
     try:
-        rows = run_query(f"SELECT ai_query('{LLM_ENDPOINT}', '{safe}') AS a", use_cache=False)
+        rows = run_query(
+            "SELECT ai_query(:endpoint, :prompt) AS a",
+            {"endpoint": LLM_ENDPOINT, "prompt": prompt},
+            use_cache=False,
+        )
         return str(rows[0]["a"]) if rows else "No answer returned."
     except Exception as exc:
         return f"Copilot unavailable: {exc}"

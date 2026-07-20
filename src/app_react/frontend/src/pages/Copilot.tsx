@@ -100,11 +100,13 @@ function GenieAnswer({ res }: { res: GenieResponse }) {
   if (!res.ok) {
     return <div className="msg bot">{res.error || 'No answer.'}</div>
   }
-  const cols = res.rows && res.rows.length > 0 ? Object.keys(res.rows[0]) : []
+  // Guard against null/empty first row (Object.keys(null) would throw).
+  const rows = (res.rows ?? []).filter((r) => r && typeof r === 'object')
+  const cols = rows.length > 0 ? Object.keys(rows[0]) : []
   return (
     <div className="msg bot">
-      {res.text && <div style={{ marginBottom: res.rows?.length ? 12 : 0 }}>{res.text}</div>}
-      {res.rows && res.rows.length > 0 && (
+      {res.text && <div style={{ marginBottom: rows.length ? 12 : 0 }}>{res.text}</div>}
+      {rows.length > 0 && (
         <div className="table-wrap">
           <table className="tabular">
             <thead>
@@ -115,7 +117,7 @@ function GenieAnswer({ res }: { res: GenieResponse }) {
               </tr>
             </thead>
             <tbody>
-              {res.rows.slice(0, 50).map((row, i) => (
+              {rows.slice(0, 50).map((row, i) => (
                 <tr key={i}>
                   {cols.map((c) => (
                     <td key={c}>{String(row[c] ?? '')}</td>
