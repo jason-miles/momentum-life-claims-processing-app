@@ -134,9 +134,14 @@ resources:
         project: momentum-claims-demo
       tasks:
         - task_key: eval_synopsis
-          description: MLflow eval of the synopsis agent over seeded scenarios DS1-DS3.
+          description: MLflow eval of the claims synopsis agent over seeded scenarios DS1-DS3.
           spark_python_task:
             python_file: ../src/ai/eval/eval_synopsis.py
+          environment_key: default
+        - task_key: eval_uw_synopsis
+          description: MLflow eval of the underwriting risk-synopsis over UW seeded scenarios.
+          spark_python_task:
+            python_file: ../src/ai/eval/eval_uw_synopsis.py
           environment_key: default
       environments:
         - environment_key: default
