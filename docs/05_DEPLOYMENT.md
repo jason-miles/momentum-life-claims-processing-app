@@ -89,6 +89,30 @@ Sizing (small, cheap, legible): one serverless SQL warehouse (auto-stop), one
 small Vector Search endpoint (reused), scale-to-zero agent serving, small
 serverless jobs.
 
+## Rebuild the underwriting domain (reproducible from the repo)
+
+The underwriting domain (`momentum_uw_*`) rebuilds end-to-end via the
+`momentum_uw_build` job, or manually in order:
+
+```bash
+# 1. synthetic underwriting data -> bronze
+python -m src.synthetic_data.generate_underwriting          # or run via the job
+# 2. silver -> gold -> metric views  (run each .sql on the warehouse, in order)
+#    src/pipelines/uw/build_uw_silver.sql
+#    src/pipelines/uw/build_uw_gold.sql
+#    src/pipelines/uw/build_uw_metric_views.sql
+# 3. Vector Search index over the underwriter notepad (idx_uw_notes)
+python src/ai/build_uw_index.py                             # waits ~mins to ONLINE
+# 4. UC agent tools + semantic retriever (needs the index ONLINE)
+#    src/pipelines/uw/build_uw_ai.sql
+
+# or, all of the above as one bundle job:
+databricks bundle run momentum_uw_build -t demo -p <profile>
+```
+
+The claims domain rebuilds identically via `momentum_claims_build`. Both jobs
+are serverless and idempotent (CREATE OR REPLACE throughout).
+
 ## Deployed demo assets (elexon workspace)
 
 Live as of the build (all on `fevm-elexon-app-for-settlement-acc`):

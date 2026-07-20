@@ -67,6 +67,67 @@ resources:
               - numpy
               - databricks-vectorsearch
 
+    momentum_uw_build:
+      name: "[Momentum Underwriting] Build medallion + AI assets"
+      tags:
+        project: momentum-claims-demo
+        domain: underwriting
+      # Reproduces the full underwriting domain end-to-end. All serverless.
+      tasks:
+        - task_key: generate_uw_bronze
+          description: Generate deterministic synthetic underwriting data -> bronze.
+          spark_python_task:
+            python_file: ../src/synthetic_data/generate_underwriting.py
+          environment_key: default
+
+        - task_key: build_uw_silver
+          description: Conform underwriting bronze -> silver.
+          depends_on: [{ task_key: generate_uw_bronze }]
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: ../src/pipelines/uw/build_uw_silver.sql
+
+        - task_key: build_uw_gold
+          description: Build underwriting gold serving views (incl. uw_case_view).
+          depends_on: [{ task_key: build_uw_silver }]
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: ../src/pipelines/uw/build_uw_gold.sql
+
+        - task_key: build_uw_metric_views
+          description: Build the underwriting UC Metric Views (STP, turnaround, NTU rate).
+          depends_on: [{ task_key: build_uw_gold }]
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: ../src/pipelines/uw/build_uw_metric_views.sql
+
+        - task_key: build_uw_index
+          description: Build the underwriter-notepad chunk table + Vector Search index.
+          depends_on: [{ task_key: build_uw_silver }]
+          spark_python_task:
+            python_file: ../src/ai/build_uw_index.py
+          environment_key: default
+
+        - task_key: build_uw_ai
+          description: Deploy the underwriting UC-function agent tools + semantic retriever.
+          depends_on: [{ task_key: build_uw_gold }, { task_key: build_uw_index }]
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: ../src/pipelines/uw/build_uw_ai.sql
+
+      environments:
+        - environment_key: default
+          spec:
+            client: "3"
+            dependencies:
+              - pandas
+              - numpy
+              - databricks-sdk
+
     momentum_claims_eval:
       name: "[Momentum Claims] Synopsis agent evaluation"
       tags:
