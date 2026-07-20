@@ -261,6 +261,7 @@ export interface UwSynopsis {
   citations: string[]
   recommendation: string
   source?: string
+  similar_cases?: { policy_no: string; chunk_text: string; score: number }[]
 }
 export interface UwExec {
   stp_rate: number | null

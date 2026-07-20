@@ -106,7 +106,23 @@ def uw_synopsis(policy_no: str) -> dict:
     if not row:
         # Don't cache the unavailable state.
         return {"policy_no": policy_no, "markdown": "_Case not found or not connected._",
-                "flags": [], "citations": [], "recommendation": "N/A", "source": "unavailable"}
+                "flags": [], "citations": [], "recommendation": "N/A", "source": "unavailable",
+                "similar_cases": []}
+
+    # RAG: semantically-similar prior notepad cases via Vector Search (idx_uw_notes),
+    # retrieved through the governed search_uw_notes UC function. Native re-build of
+    # the pgvector POC (spec R2.2). Best-effort — never blocks the synopsis.
+    similar = []
+    note_txt = " ".join(n.get("note_text", "") for n in detail["notes"])[:400]
+    if note_txt:
+        try:
+            q = note_txt.replace("'", "''")
+            rows = run_query(
+                f"SELECT policy_no, chunk_text, score FROM {AI}.search_uw_notes('{q}') "
+                f"WHERE policy_no <> :p ORDER BY score DESC LIMIT 3", {"p": policy_no})
+            similar = rows
+        except Exception:
+            similar = []
 
     flags, citations = [], ["APP", "LIFE"]
     if row.get("smoker_flag"):
@@ -167,7 +183,10 @@ def uw_synopsis(policy_no: str) -> dict:
     else:
         source = "ai_query"
 
+    if similar:
+        citations.append("VS:notes")
     result = {"policy_no": policy_no, "markdown": text, "flags": flags,
-              "citations": citations, "recommendation": rec, "source": source}
+              "citations": citations, "recommendation": rec, "source": source,
+              "similar_cases": similar}
     synopsis_cache.put(cache_key, result)
     return result
