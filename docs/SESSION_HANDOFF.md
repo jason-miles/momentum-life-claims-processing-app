@@ -1,6 +1,32 @@
 # Session Handoff — Momentum Life Claims Processing App
 
-**Last updated:** 2026-07-20 (two-domain: + Underwriting & Claims Co-Pilots)
+**Last updated:** 2026-07-20 (UW polish: Genie, VS RAG, Exec View, dashboard)
+
+## ✅ UPDATE 3 — Underwriting polish round (all deployed & browser-verified)
+
+- **Underwriting Genie space** "Momentum Underwriting Analyst"
+  (`01f184232e3012439e84ae6cab552b1e`) over 7 UW gold tables; app SP CAN_RUN.
+  Wired via `/api/uw/genie` + a "Ask the Underwriting Analyst" NL panel on UW Analytics.
+- **Vector Search RAG (the spec hero beat, R2.2)**: delta-sync index
+  `momentum_uw_ai.idx_uw_notes` on `valterra-vs-endpoint` (gte-large-en, 4003 notes,
+  ONLINE; metadata-filter by policy_no verified). Governed retriever UC fn
+  `search_uw_notes(query)`. UW synopsis RAG-retrieves 3 similar prior cases (cited VS:notes).
+- **Claims-side RAG (symmetry)**: UC fn `momentum_claims_ai.search_similar_documents(query)`
+  over the existing `idx_documents`; claims synopsis cites [VS:docs] + shows similar claims.
+- **Underwriting Executive View** (`/uw-exec`): portfolio KPIs (STP/NTU/turnaround/
+  counteroffers), journey + decision mix, NTU drop-off, and a "Recoverable new business"
+  value card (~179 cases ≈ R295m SAR if 25% of requirements-never-returned saved).
+- **Underwriting Lakeview dashboard** published:
+  `/sql/dashboardsv3/01f18426eb7e1f71a5ad6e922e505ef2`; JSON in `dashboards/uw_underwriting.lvdash.json`.
+- **Perf**: synopsis TTL cache + startup pre-warm of the 6 seeded cases; warehouse
+  Medium / min-2 clusters / 60-min auto-stop (cold-start was the page-load culprit).
+- **UW demo runbook**: `docs/UW_DEMO_RUNBOOK.md` (9-beat storyboard for Tuesday on-site).
+- Nav groups: Co-Pilots / Underwriting (Exec View + UW Analytics) / Claims (Exec View +
+  Inbox + NTU/Ops + Fraud) / Platform. Roles now include Underwriter.
+- All browser-verified, zero console errors. ~23 commits — still need `git push` (gated).
+
+---
+
 
 ## ✅ UPDATE 2 — Underwriting Co-Pilot + Claims Co-Pilot added (two-domain app)
 
