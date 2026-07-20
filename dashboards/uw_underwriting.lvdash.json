@@ -1,0 +1,414 @@
+{
+  "datasets": [
+    {
+      "name": "ds_stp",
+      "displayName": "STP rate",
+      "queryLines": [
+        "SELECT MEASURE(stp_rate) AS stp ",
+        "FROM elexon_app_for_settlement_acc_catalog.momentum_uw_gold.uw_stp_rate"
+      ]
+    },
+    {
+      "name": "ds_ntu",
+      "displayName": "NTU rate",
+      "queryLines": [
+        "SELECT MEASURE(ntu_rate) AS ntu ",
+        "FROM elexon_app_for_settlement_acc_catalog.momentum_uw_gold.uw_ntu_rate"
+      ]
+    },
+    {
+      "name": "ds_turnaround",
+      "displayName": "Avg turnaround days",
+      "queryLines": [
+        "SELECT MEASURE(avg_cycle_days) AS avg_cycle_days ",
+        "FROM elexon_app_for_settlement_acc_catalog.momentum_uw_gold.uw_turnaround"
+      ]
+    },
+    {
+      "name": "ds_total",
+      "displayName": "Total applications",
+      "queryLines": [
+        "SELECT COUNT(*) AS total_apps ",
+        "FROM elexon_app_for_settlement_acc_catalog.momentum_uw_gold.uw_case_view"
+      ]
+    },
+    {
+      "name": "ds_journey",
+      "displayName": "Journey split",
+      "queryLines": [
+        "SELECT journey_type, n ",
+        "FROM elexon_app_for_settlement_acc_catalog.momentum_uw_gold.uw_journey_split"
+      ]
+    },
+    {
+      "name": "ds_decision",
+      "displayName": "Decision split",
+      "queryLines": [
+        "SELECT outcome, n ",
+        "FROM elexon_app_for_settlement_acc_catalog.momentum_uw_gold.uw_decision_split"
+      ]
+    },
+    {
+      "name": "ds_ntu_funnel",
+      "displayName": "NTU funnel",
+      "queryLines": [
+        "SELECT ntu_bucket, n ",
+        "FROM elexon_app_for_settlement_acc_catalog.momentum_uw_gold.uw_ntu_funnel"
+      ]
+    },
+    {
+      "name": "ds_requirements",
+      "displayName": "Requirement analytics",
+      "queryLines": [
+        "SELECT code, description, n_requested, n_returned, n_outstanding, pct_returned, avg_days_to_return ",
+        "FROM elexon_app_for_settlement_acc_catalog.momentum_uw_gold.uw_requirement_analytics ",
+        "ORDER BY n_requested DESC"
+      ]
+    },
+    {
+      "name": "ds_at_risk",
+      "displayName": "Top at-risk cases",
+      "queryLines": [
+        "SELECT policy_no, sar_band, sum_at_risk, days_req_outstanding, ntu_propensity ",
+        "FROM elexon_app_for_settlement_acc_catalog.momentum_uw_gold.uw_ntu_at_risk ",
+        "ORDER BY ntu_propensity DESC ",
+        "LIMIT 20"
+      ]
+    },
+    {
+      "name": "ds_sar",
+      "displayName": "Applications by SAR band",
+      "queryLines": [
+        "SELECT sar_band, COUNT(*) AS n ",
+        "FROM elexon_app_for_settlement_acc_catalog.momentum_uw_gold.uw_case_view ",
+        "GROUP BY sar_band"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "page_underwriting",
+      "displayName": "Underwriting",
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layout": [
+        {
+          "widget": {
+            "name": "title",
+            "multilineTextboxSpec": {
+              "lines": ["## Momentum Underwriting — new business, journeys, decisions & NTU (synthetic)"]
+            }
+          },
+          "position": {"x": 0, "y": 0, "width": 6, "height": 1}
+        },
+        {
+          "widget": {
+            "name": "subtitle",
+            "multilineTextboxSpec": {
+              "lines": ["Executive view of new-business underwriting: straight-through processing, first-pass journeys, manual decisions, requirements and Not-Taken-Up (NTU) risk. Synthetic demo data."]
+            }
+          },
+          "position": {"x": 0, "y": 1, "width": 6, "height": 1}
+        },
+        {
+          "widget": {
+            "name": "kpi-stp-rate",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "ds_stp",
+                "fields": [{"name": "stp", "expression": "`stp`"}],
+                "disaggregated": true
+              }
+            }],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "stp",
+                  "displayName": "STP rate",
+                  "format": {"type": "number-percent", "decimalPlaces": {"type": "exact", "places": 1}}
+                }
+              },
+              "frame": {"showTitle": true, "title": "STP rate"}
+            }
+          },
+          "position": {"x": 0, "y": 2, "width": 2, "height": 3}
+        },
+        {
+          "widget": {
+            "name": "kpi-ntu-rate",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "ds_ntu",
+                "fields": [{"name": "ntu", "expression": "`ntu`"}],
+                "disaggregated": true
+              }
+            }],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "ntu",
+                  "displayName": "NTU rate",
+                  "format": {"type": "number-percent", "decimalPlaces": {"type": "exact", "places": 1}}
+                }
+              },
+              "frame": {"showTitle": true, "title": "NTU rate"}
+            }
+          },
+          "position": {"x": 2, "y": 2, "width": 2, "height": 3}
+        },
+        {
+          "widget": {
+            "name": "kpi-turnaround",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "ds_turnaround",
+                "fields": [{"name": "avg_cycle_days", "expression": "`avg_cycle_days`"}],
+                "disaggregated": true
+              }
+            }],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "avg_cycle_days",
+                  "displayName": "Avg turnaround (days)",
+                  "format": {"type": "number-plain", "decimalPlaces": {"type": "exact", "places": 1}}
+                }
+              },
+              "frame": {"showTitle": true, "title": "Avg turnaround (days)"}
+            }
+          },
+          "position": {"x": 4, "y": 2, "width": 2, "height": 3}
+        },
+        {
+          "widget": {
+            "name": "kpi-total-apps",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "ds_total",
+                "fields": [{"name": "total_apps", "expression": "`total_apps`"}],
+                "disaggregated": true
+              }
+            }],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {"fieldName": "total_apps", "displayName": "Total applications"}
+              },
+              "frame": {"showTitle": true, "title": "Total applications"}
+            }
+          },
+          "position": {"x": 0, "y": 5, "width": 2, "height": 3}
+        },
+        {
+          "widget": {
+            "name": "bar-sar-band",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "ds_sar",
+                "fields": [
+                  {"name": "sar_band", "expression": "`sar_band`"},
+                  {"name": "sum(n)", "expression": "SUM(`n`)"}
+                ],
+                "disaggregated": false
+              }
+            }],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {"fieldName": "sar_band", "scale": {"type": "categorical", "sort": {"by": "y-reversed"}}, "displayName": "SAR band"},
+                "y": {"fieldName": "sum(n)", "scale": {"type": "quantitative"}, "displayName": "Applications"},
+                "label": {"show": true}
+              },
+              "frame": {"showTitle": true, "title": "Applications by sum-at-risk band"},
+              "mark": {"colors": ["#14205a"]}
+            }
+          },
+          "position": {"x": 2, "y": 5, "width": 4, "height": 3}
+        },
+        {
+          "widget": {
+            "name": "pie-journey-split",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "ds_journey",
+                "fields": [
+                  {"name": "journey_type", "expression": "`journey_type`"},
+                  {"name": "sum(n)", "expression": "SUM(`n`)"}
+                ],
+                "disaggregated": false
+              }
+            }],
+            "spec": {
+              "version": 3,
+              "widgetType": "pie",
+              "encodings": {
+                "angle": {"fieldName": "sum(n)", "scale": {"type": "quantitative"}, "displayName": "Applications"},
+                "color": {"fieldName": "journey_type", "scale": {"type": "categorical"}, "displayName": "Journey type"}
+              },
+              "frame": {"showTitle": true, "title": "First-pass journey split"},
+              "mark": {"colors": ["#14205a", "#8BCAE7", "#AB4057", "#919191"]}
+            }
+          },
+          "position": {"x": 0, "y": 8, "width": 3, "height": 6}
+        },
+        {
+          "widget": {
+            "name": "bar-decision-split",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "ds_decision",
+                "fields": [
+                  {"name": "outcome", "expression": "`outcome`"},
+                  {"name": "sum(n)", "expression": "SUM(`n`)"}
+                ],
+                "disaggregated": false
+              }
+            }],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {"fieldName": "outcome", "scale": {"type": "categorical", "sort": {"by": "y-reversed"}}, "displayName": "Decision outcome"},
+                "y": {"fieldName": "sum(n)", "scale": {"type": "quantitative"}, "displayName": "Cases"},
+                "label": {"show": true}
+              },
+              "frame": {"showTitle": true, "title": "Manual decision split"},
+              "mark": {"colors": ["#14205a"]}
+            }
+          },
+          "position": {"x": 3, "y": 8, "width": 3, "height": 6}
+        },
+        {
+          "widget": {
+            "name": "bar-ntu-funnel",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "ds_ntu_funnel",
+                "fields": [
+                  {"name": "ntu_bucket", "expression": "`ntu_bucket`"},
+                  {"name": "sum(n)", "expression": "SUM(`n`)"}
+                ],
+                "disaggregated": false
+              }
+            }],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {"fieldName": "sum(n)", "scale": {"type": "quantitative"}, "displayName": "NTU cases"},
+                "y": {"fieldName": "ntu_bucket", "scale": {"type": "categorical", "sort": {"by": "x-reversed"}}, "displayName": "NTU bucket"},
+                "color": {
+                  "fieldName": "ntu_bucket",
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {"value": "requirements_never_returned", "color": "#e4002b"},
+                      {"value": "counteroffer_not_accepted", "color": "#14205a"},
+                      {"value": "withdrew_at_quote", "color": "#14205a"},
+                      {"value": "postpone_lapsed", "color": "#14205a"}
+                    ]
+                  },
+                  "displayName": "NTU bucket"
+                },
+                "label": {"show": true}
+              },
+              "frame": {"showTitle": true, "title": "NTU drop-off by bucket (requirements never returned highlighted)"}
+            }
+          },
+          "position": {"x": 0, "y": 14, "width": 6, "height": 6}
+        },
+        {
+          "widget": {
+            "name": "table-requirements",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "ds_requirements",
+                "fields": [
+                  {"name": "code", "expression": "`code`"},
+                  {"name": "description", "expression": "`description`"},
+                  {"name": "n_requested", "expression": "`n_requested`"},
+                  {"name": "n_returned", "expression": "`n_returned`"},
+                  {"name": "n_outstanding", "expression": "`n_outstanding`"},
+                  {"name": "pct_returned", "expression": "`pct_returned`"},
+                  {"name": "avg_days_to_return", "expression": "`avg_days_to_return`"}
+                ],
+                "disaggregated": true
+              }
+            }],
+            "spec": {
+              "version": 2,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {"fieldName": "code", "displayName": "Code"},
+                  {"fieldName": "description", "displayName": "Requirement"},
+                  {"fieldName": "n_requested", "displayName": "Requested"},
+                  {"fieldName": "n_returned", "displayName": "Returned"},
+                  {"fieldName": "n_outstanding", "displayName": "Outstanding"},
+                  {"fieldName": "pct_returned", "displayName": "% returned"},
+                  {"fieldName": "avg_days_to_return", "displayName": "Avg days to return"}
+                ]
+              },
+              "frame": {"showTitle": true, "title": "Requirements analytics"}
+            }
+          },
+          "position": {"x": 0, "y": 20, "width": 6, "height": 7}
+        },
+        {
+          "widget": {
+            "name": "table-at-risk",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "ds_at_risk",
+                "fields": [
+                  {"name": "policy_no", "expression": "`policy_no`"},
+                  {"name": "sar_band", "expression": "`sar_band`"},
+                  {"name": "sum_at_risk", "expression": "`sum_at_risk`"},
+                  {"name": "days_req_outstanding", "expression": "`days_req_outstanding`"},
+                  {"name": "ntu_propensity", "expression": "`ntu_propensity`"}
+                ],
+                "disaggregated": true
+              }
+            }],
+            "spec": {
+              "version": 2,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {"fieldName": "policy_no", "displayName": "Policy no"},
+                  {"fieldName": "sar_band", "displayName": "SAR band"},
+                  {"fieldName": "sum_at_risk", "displayName": "Sum at risk"},
+                  {"fieldName": "days_req_outstanding", "displayName": "Days req outstanding"},
+                  {"fieldName": "ntu_propensity", "displayName": "NTU propensity"}
+                ]
+              },
+              "frame": {"showTitle": true, "title": "Top 20 at-risk cases (by NTU propensity)"}
+            }
+          },
+          "position": {"x": 0, "y": 27, "width": 6, "height": 7}
+        }
+      ]
+    }
+  ],
+  "uiSettings": {
+    "theme": {"widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"},
+    "applyModeEnabled": false
+  }
+}

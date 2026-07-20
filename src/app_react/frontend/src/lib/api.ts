@@ -102,6 +102,7 @@ export interface Synopsis {
   citations: string[]
   recommendation: string
   source?: string
+  similar_cases?: { claim_no: string; doc_type: string; chunk_text: string; score: number }[]
 }
 
 export interface GenieResponse {

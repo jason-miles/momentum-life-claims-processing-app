@@ -181,8 +181,34 @@ def draft_synopsis(claim_no: str) -> dict:
 
     ai = _ai_query_synopsis(row)
     result = ai if ai is not None else _heuristic_synopsis(row)
+
+    # RAG: semantically-similar prior claim documents via Vector Search
+    # (idx_documents), through the governed search_similar_documents UC function.
+    # Best-effort — never blocks the synopsis.
+    result["similar_cases"] = _similar_claims(row, exclude=claim_no)
+    if result["similar_cases"]:
+        result.setdefault("citations", []).append("VS:docs")
+
     synopsis_cache.put(cache_key, result)
     return result
+
+
+def _similar_claims(row: dict, exclude: str) -> list[dict]:
+    from server.sql_client import run_query
+    from server.config import CATALOG, AI
+
+    ctype = row.get("claim_type") or ""
+    occ = row.get("occupation_at_claim") or ""
+    query = f"{ctype} claim occupation {occ} " + (row.get("outstanding_codes") or "")
+    q = query.replace("'", "''")
+    try:
+        rows = run_query(
+            f"SELECT claim_no, doc_type, chunk_text, score "
+            f"FROM {CATALOG}.{AI}.search_similar_documents('{q}') "
+            f"WHERE claim_no <> :ex ORDER BY score DESC LIMIT 3", {"ex": exclude})
+        return rows or []
+    except Exception:
+        return []
 
 
 def ask_claim_copilot(claim_no: str, question: str) -> str:

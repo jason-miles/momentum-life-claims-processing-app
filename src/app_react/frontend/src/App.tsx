@@ -12,6 +12,7 @@ import Fraud from './pages/Fraud'
 import Admin from './pages/Admin'
 import Underwriting from './pages/Underwriting'
 import UwAnalytics from './pages/UwAnalytics'
+import UwExec from './pages/UwExec'
 
 const LOGO = '/momentum_life_logo.png'
 
@@ -94,7 +95,10 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: 'Underwriting',
-    items: [{ to: '/uw-analytics', label: 'UW Analytics', icon: I.uwChart }],
+    items: [
+      { to: '/uw-exec', label: 'Executive View', icon: I.exec },
+      { to: '/uw-analytics', label: 'UW Analytics', icon: I.uwChart },
+    ],
   },
   {
     label: 'Claims',
@@ -206,6 +210,7 @@ function Shell() {
           <Route path="/fraud" element={<Fraud />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/underwriting" element={<Underwriting />} />
+          <Route path="/uw-exec" element={<UwExec />} />
           <Route path="/uw-analytics" element={<UwAnalytics />} />
         </Routes>
       </div>
