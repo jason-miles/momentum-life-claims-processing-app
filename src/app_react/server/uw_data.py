@@ -95,9 +95,16 @@ def uw_ops() -> list[dict]:
 def uw_synopsis(policy_no: str) -> dict:
     """Draft a source-cited underwriting risk synopsis. Advisory only — never a
     bind/decline decision. Uses the UC tools as context, then ai_query(Claude)."""
+    from server import synopsis_cache
+    cache_key = f"uw:{policy_no}"
+    cached = synopsis_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     detail = uw_case(policy_no)
     row = detail["row"]
     if not row:
+        # Don't cache the unavailable state.
         return {"policy_no": policy_no, "markdown": "_Case not found or not connected._",
                 "flags": [], "citations": [], "recommendation": "N/A", "source": "unavailable"}
 
@@ -160,5 +167,7 @@ def uw_synopsis(policy_no: str) -> dict:
     else:
         source = "ai_query"
 
-    return {"policy_no": policy_no, "markdown": text, "flags": flags,
-            "citations": citations, "recommendation": rec, "source": source}
+    result = {"policy_no": policy_no, "markdown": text, "flags": flags,
+              "citations": citations, "recommendation": rec, "source": source}
+    synopsis_cache.put(cache_key, result)
+    return result

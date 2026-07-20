@@ -144,12 +144,21 @@ def _ai_query_synopsis(row: dict) -> dict | None:
 
 
 def draft_synopsis(claim_no: str) -> dict:
+    # Serve a cached result if we have a recent successful one (Claude calls are
+    # slow; re-opening the same claim during a demo should be instant).
+    from server import synopsis_cache
+    cache_key = f"claim:{claim_no}"
+    cached = synopsis_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     try:  # pragma: no cover - only when agent is on path
         from ai.agents.synopsis_agent import draft_synopsis as _agent_draft
 
         result = _agent_draft(claim_no)
         if isinstance(result, dict) and result.get("markdown"):
             result.setdefault("source", "agent")
+            synopsis_cache.put(cache_key, result)
             return result
     except Exception:
         pass
@@ -160,6 +169,7 @@ def draft_synopsis(claim_no: str) -> dict:
         row = None
 
     if row is None:
+        # Do NOT cache the unavailable state — a transient blip shouldn't stick.
         return {
             "claim_no": claim_no,
             "markdown": ("_Could not load claim context — not connected to Databricks._"),
@@ -170,7 +180,9 @@ def draft_synopsis(claim_no: str) -> dict:
         }
 
     ai = _ai_query_synopsis(row)
-    return ai if ai is not None else _heuristic_synopsis(row)
+    result = ai if ai is not None else _heuristic_synopsis(row)
+    synopsis_cache.put(cache_key, result)
+    return result
 
 
 def ask_claim_copilot(claim_no: str, question: str) -> str:
