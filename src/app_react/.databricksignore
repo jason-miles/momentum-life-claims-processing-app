@@ -1,0 +1,4 @@
+frontend/
+.tsbuild/
+__pycache__/
+*.pyc
