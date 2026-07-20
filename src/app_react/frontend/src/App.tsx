@@ -19,10 +19,10 @@ interface NavItem {
 }
 
 const NAV: NavItem[] = [
+  { to: '/exec', label: 'Executive View' },
   { to: '/', label: 'Claims Inbox' },
   { to: '/copilot', label: 'AI Copilot' },
   { to: '/ntu', label: 'NTU / Ops' },
-  { to: '/exec', label: 'Executive View' },
   { to: '/fraud', label: 'Fraud Workbench' },
   { to: '/admin', label: 'Admin Console' },
 ]
