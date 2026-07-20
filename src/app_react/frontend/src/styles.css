@@ -1121,3 +1121,130 @@ details.sql-details summary {
     font-size: 17px;
   }
 }
+
+/* ==========================================================================
+   ENTERPRISE REFINEMENT PASS (override block — cascade wins over the above)
+   Fixes new App.tsx classes, tones down typography, tightens data density,
+   refines sidebar/topbar/cards/pills/charts to a calm, premium look.
+   ========================================================================== */
+
+/* --- Type scale: restrained, corporate (no 800 weights, smaller headings) - */
+h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: 16px; font-weight: 650; letter-spacing: -0.01em; }
+h3, h4 { font-weight: 650; }
+.page-head h1 { font-size: 24px; font-weight: 700; }
+.topbar .title h1 { font-size: 18px; font-weight: 700; }
+body { font-size: 14px; }
+
+/* Claim id in the detail header: a tidy mono badge, not a giant hero line */
+.page-head { display: flex; flex-direction: column; gap: 2px; }
+.page-head .sub { font-size: 13.5px; }
+
+/* --- Sidebar brand: clean knockout chip, no awkward box ------------------- */
+.sidebar { width: 244px; flex: 0 0 244px; padding: 20px 14px; gap: 4px;
+  background: linear-gradient(180deg, #14205a 0%, #101a49 100%); }
+.sidebar-brand { display: flex; align-items: center; gap: 11px;
+  padding: 4px 6px 20px; }
+.brand-chip { display: inline-flex; align-items: center; justify-content: center;
+  background: #fff; border-radius: 9px; padding: 6px 9px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.18); flex: 0 0 auto; }
+.brand-chip img { height: 22px; display: block; }
+.brand-text { font-family: var(--font-head); font-weight: 650; font-size: 13.5px;
+  color: #fff; line-height: 1.25; letter-spacing: -0.01em; }
+.brand-text small { display: block; font-weight: 400; font-size: 11px;
+  color: rgba(255,255,255,0.55); letter-spacing: 0; }
+
+.nav-group-label { font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: rgba(255,255,255,0.4);
+  padding: 8px 12px 6px; }
+
+/* Nav chips: icon + label, subtle active state with left accent */
+.nav-chip { display: flex; align-items: center; gap: 11px; padding: 9px 12px;
+  border-radius: 9px; color: rgba(255,255,255,0.72); font-weight: 500;
+  font-size: 13.5px; cursor: pointer; border: none; background: transparent;
+  width: 100%; text-align: left; position: relative;
+  transition: background 0.14s ease, color 0.14s ease; }
+.nav-chip:hover { background: rgba(255,255,255,0.07); color: #fff; text-decoration: none; }
+.nav-chip.active { background: rgba(255,255,255,0.12); color: #fff; font-weight: 600; box-shadow: none; }
+.nav-chip.active::before { content: ''; position: absolute; left: -14px; top: 8px; bottom: 8px;
+  width: 3px; border-radius: 0 3px 3px 0; background: var(--red); }
+.nav-chip .ico { width: 18px; height: 18px; flex: 0 0 18px; display: inline-flex; }
+.nav-chip .ico svg { width: 18px; height: 18px; }
+.nav-label { flex: 1 1 auto; }
+.sidebar-foot { margin-top: auto; padding: 14px 12px 4px; border-top: 1px solid rgba(255,255,255,0.08); }
+.sidebar-foot .small { color: rgba(255,255,255,0.7); }
+.sidebar-foot .muted { color: rgba(255,255,255,0.4); }
+
+/* --- Topbar: single-line role switch, tighter --------------------------- */
+.topbar { padding: 14px 32px; }
+.topbar-right { display: flex; align-items: center; gap: 20px; }
+.role-switch { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.role-switch-label { font-size: 12px; color: var(--ink-2); font-weight: 600; white-space: nowrap; }
+.role-select { font-family: var(--font-body); font-size: 13.5px; font-weight: 600;
+  color: var(--navy); border: 1px solid var(--line); border-radius: var(--pill);
+  padding: 7px 32px 7px 14px; background: #fff; cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2314205a' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center; }
+.conn { font-size: 12px; }
+.conn .dot.ok { background: var(--good); }
+.conn .dot.bad { background: var(--warn); }
+
+/* --- Page canvas ---------------------------------------------------------- */
+.page { padding: 28px 32px 64px; max-width: 1440px; }
+
+/* --- Cards: crisper, lighter shadow -------------------------------------- */
+.card { border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 1px 2px rgba(16,24,64,0.04);
+  padding: 20px; }
+.card-head { margin-bottom: 14px; }
+.card-head h2 { margin: 0; }
+.card-sub { font-size: 12.5px; color: var(--ink-2); }
+
+/* --- Tables: compact density, light gridlines, sticky header ------------- */
+.table-wrap { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.table-wrap table, table.tabular { width: 100%; border-collapse: collapse; font-size: 13px; }
+.table-wrap thead th, table.tabular thead th { position: sticky; top: 0; z-index: 1;
+  background: var(--bg-soft); color: var(--ink-2); font-weight: 600; font-size: 11.5px;
+  letter-spacing: 0.03em; text-transform: uppercase; text-align: left;
+  padding: 9px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.table-wrap tbody td, table.tabular tbody td { padding: 8px 14px; border-bottom: 1px solid #eef1f6;
+  color: var(--ink); }
+.table-wrap tbody tr:last-child td { border-bottom: none; }
+.table-wrap tbody tr { transition: background 0.1s ease; }
+.claim-link { cursor: pointer; }
+.claim-link:hover td { background: #f7f9fc; }
+
+/* --- Pills: smaller, subtler ---------------------------------------------- */
+.pill { padding: 2px 9px; font-size: 11px; font-weight: 600; border-radius: var(--pill);
+  border: 1px solid transparent; }
+.pill-neutral { background: #eef2f7; color: #5b6b7c; }
+.chip-row { gap: 6px; }
+
+/* --- KPI tiles: balanced, top accent ------------------------------------- */
+.kpi { padding: 20px 22px; border-radius: 12px; box-shadow: 0 1px 2px rgba(16,24,64,0.04); }
+.kpi::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: var(--navy); border-radius: 12px 12px 0 0; }
+.kpi .label { font-size: 12px; letter-spacing: 0.01em; }
+.kpi .value { font-size: 34px; font-weight: 700; letter-spacing: -0.02em; }
+.kpi .value .unit { font-size: 17px; font-weight: 600; }
+.kpi-grid { gap: 18px; }
+
+/* --- Buttons: keep pills, refine weight ---------------------------------- */
+.btn { font-weight: 600; font-size: 13.5px; border-radius: var(--pill); }
+.btn-primary { background: var(--navy); }
+.btn-primary:hover { background: var(--navy-2); }
+
+/* --- Recharts polish ------------------------------------------------------ */
+.recharts-cartesian-grid line { stroke: #eef1f6; }
+.recharts-cartesian-axis-tick text { fill: var(--ink-2); font-size: 11px; }
+.recharts-default-tooltip { border-radius: 8px !important; border: 1px solid var(--line) !important;
+  box-shadow: var(--shadow-md) !important; font-size: 12.5px; }
+
+/* --- Inbox pagination bar ------------------------------------------------- */
+.pager { display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 4px 0; font-size: 13px; color: var(--ink-2); }
+.pager .pager-btns { display: flex; gap: 6px; }
+.pager button { border: 1px solid var(--line); background: #fff; border-radius: 8px;
+  padding: 5px 12px; font-size: 13px; font-weight: 600; color: var(--navy); cursor: pointer; }
+.pager button:disabled { color: var(--ink-3); cursor: default; background: var(--bg); }
+.pager button:not(:disabled):hover { border-color: var(--navy); }

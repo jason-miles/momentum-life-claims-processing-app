@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { NavLink, Route, Routes } from 'react-router-dom'
 import { RoleProvider, useRole, ROLES, type Role } from './lib/roleContext'
 import { useApi } from './lib/useApi'
@@ -10,28 +11,72 @@ import ExecView from './pages/ExecView'
 import Fraud from './pages/Fraud'
 import Admin from './pages/Admin'
 
-const LOGO = './momentum_life_logo.png'
+const LOGO = '/momentum_life_logo.png'
 
 interface NavItem {
   to: string
   label: string
+  icon: ReactNode
   roles?: Role[]
 }
 
+/* Inline stroke icons — 1.75px, currentColor, 18px grid (Lucide-style). */
+const I = {
+  exec: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 3v16a2 2 0 0 0 2 2h16" />
+      <path d="M7 15l3.5-4 3 2.5L21 7" />
+    </svg>
+  ),
+  inbox: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 12h-6l-2 3h-4l-2-3H2" />
+      <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+    </svg>
+  ),
+  copilot: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3a2 2 0 0 1 2 2v1h3a2 2 0 0 1 2 2v3h1a2 2 0 0 1 0 4h-1v3a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-3H4a2 2 0 0 1 0-4h1V8a2 2 0 0 1 2-2h3V5a2 2 0 0 1 2-2z" />
+      <circle cx="9" cy="12" r="1" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="12" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  ),
+  ntu: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 3v18h18" />
+      <path d="M7 14l4-4 3 3 5-6" />
+    </svg>
+  ),
+  fraud: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      <path d="M12 8v4" />
+      <circle cx="12" cy="15.5" r="0.5" fill="currentColor" stroke="currentColor" />
+    </svg>
+  ),
+  admin: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <ellipse cx="12" cy="5" rx="8" ry="3" />
+      <path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5" />
+      <path d="M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6" />
+    </svg>
+  ),
+}
+
 const NAV: NavItem[] = [
-  { to: '/exec', label: 'Executive View' },
-  { to: '/', label: 'Claims Inbox' },
-  { to: '/copilot', label: 'AI Copilot' },
-  { to: '/ntu', label: 'NTU / Ops' },
-  { to: '/fraud', label: 'Fraud Workbench' },
-  { to: '/admin', label: 'Admin Console' },
+  { to: '/exec', label: 'Executive View', icon: I.exec },
+  { to: '/', label: 'Claims Inbox', icon: I.inbox },
+  { to: '/copilot', label: 'AI Copilot', icon: I.copilot },
+  { to: '/ntu', label: 'NTU / Ops', icon: I.ntu },
+  { to: '/fraud', label: 'Fraud Workbench', icon: I.fraud },
+  { to: '/admin', label: 'Admin Console', icon: I.admin },
 ]
 
 function ConnDot() {
   const { data } = useApi(() => api.health(), [])
   const ok = data?.db_connected
   const label = data == null ? 'checking…' : ok ? 'Connected' : 'Demo mode'
-  const cls = data == null ? 'dot' : ok ? 'dot dot-good' : 'dot dot-warn'
+  const cls = data == null ? 'dot' : ok ? 'dot ok' : 'dot bad'
   return (
     <span className="conn" title={data?.db_message || ''}>
       <span className={cls} />
@@ -43,10 +88,10 @@ function ConnDot() {
 function RoleSwitch() {
   const { role, setRole } = useRole()
   return (
-    <div className="role-switch">
-      <span className="small muted">View as</span>
+    <label className="role-switch">
+      <span className="role-switch-label">View as</span>
       <select
-        className="select"
+        className="role-select"
         value={role}
         onChange={(e) => setRole(e.target.value as Role)}
       >
@@ -56,7 +101,7 @@ function RoleSwitch() {
           </option>
         ))}
       </select>
-    </div>
+    </label>
   )
 }
 
@@ -64,7 +109,13 @@ function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
-        <img src={LOGO} alt="Momentum Life" />
+        <span className="brand-chip">
+          <img src={LOGO} alt="Momentum Life" />
+        </span>
+        <span className="brand-text">
+          Momentum Life
+          <small>Claims Processing</small>
+        </span>
       </div>
       <nav className="nav-group">
         <div className="nav-group-label">Claims</div>
@@ -75,7 +126,10 @@ function Sidebar() {
             end={n.to === '/'}
             className={({ isActive }) => 'nav-chip' + (isActive ? ' active' : '')}
           >
-            {n.label}
+            <span className="ico" aria-hidden="true">
+              {n.icon}
+            </span>
+            <span className="nav-label">{n.label}</span>
           </NavLink>
         ))}
       </nav>

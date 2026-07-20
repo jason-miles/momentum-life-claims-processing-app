@@ -1,16 +1,25 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api, type InboxClaim } from '../lib/api'
 import { useApi } from '../lib/useApi'
 import { zar } from '../lib/format'
 import { Page, Card, Async, StatePill, Pill, labelize } from '../components/ui'
 
+const PAGE_SIZE = 25
+
 export default function Inbox() {
   const state = useApi(() => api.inbox(), [])
   const [q, setQ] = useState('')
   const [type, setType] = useState('all')
   const [claimState, setClaimState] = useState('all')
+  const [page, setPage] = useState(0)
   const nav = useNavigate()
+
+  // Reset to the first page whenever a filter changes.
+  const onFilter = <T,>(setter: (v: T) => void) => (v: T) => {
+    setter(v)
+    setPage(0)
+  }
 
   return (
     <Page title="Claims Inbox" sub="Assessment queue — synthetic claims across all states">
@@ -24,6 +33,9 @@ export default function Inbox() {
             if (q && !c.claim_no.toLowerCase().includes(q.toLowerCase())) return false
             return true
           })
+          const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE))
+          const safePage = Math.min(page, pageCount - 1)
+          const pageRows = rows.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE)
           return (
             <Card
               title={`${rows.length} claims`}
@@ -33,9 +45,9 @@ export default function Inbox() {
                     className="input search"
                     placeholder="Search claim no…"
                     value={q}
-                    onChange={(e) => setQ(e.target.value)}
+                    onChange={(e) => onFilter(setQ)(e.target.value)}
                   />
-                  <select className="select" value={type} onChange={(e) => setType(e.target.value)}>
+                  <select className="select" value={type} onChange={(e) => onFilter(setType)(e.target.value)}>
                     {types.map((t) => (
                       <option key={t} value={t}>
                         {t === 'all' ? 'All types' : labelize(t)}
@@ -45,7 +57,7 @@ export default function Inbox() {
                   <select
                     className="select"
                     value={claimState}
-                    onChange={(e) => setClaimState(e.target.value)}
+                    onChange={(e) => onFilter(setClaimState)(e.target.value)}
                   >
                     {states.map((s) => (
                       <option key={s} value={s}>
@@ -71,7 +83,7 @@ export default function Inbox() {
                     </tr>
                   </thead>
                   <tbody>
-                    {rows.map((c) => (
+                    {pageRows.map((c) => (
                       <tr
                         key={c.claim_no}
                         className="claim-link"
@@ -110,6 +122,28 @@ export default function Inbox() {
                   </tbody>
                 </table>
               </div>
+              {rows.length > PAGE_SIZE && (
+                <div className="pager">
+                  <span>
+                    Showing {safePage * PAGE_SIZE + 1}–
+                    {Math.min(safePage * PAGE_SIZE + PAGE_SIZE, rows.length)} of {rows.length}
+                  </span>
+                  <div className="pager-btns">
+                    <button disabled={safePage === 0} onClick={() => setPage(safePage - 1)}>
+                      ← Prev
+                    </button>
+                    <span style={{ padding: '5px 4px' }}>
+                      Page {safePage + 1} of {pageCount}
+                    </span>
+                    <button
+                      disabled={safePage >= pageCount - 1}
+                      onClick={() => setPage(safePage + 1)}
+                    >
+                      Next →
+                    </button>
+                  </div>
+                </div>
+              )}
             </Card>
           )
         }}
