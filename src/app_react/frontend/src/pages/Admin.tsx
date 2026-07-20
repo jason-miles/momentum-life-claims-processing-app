@@ -68,8 +68,10 @@ export default function Admin() {
               <dd>
                 <code className="chip">elexon_app_for_settlement_acc_catalog</code>
               </dd>
-              <dt>Schemas</dt>
+              <dt>Claims schemas</dt>
               <dd>momentum_claims_&#123;bronze,silver,gold,ai,ops&#125;</dd>
+              <dt>Underwriting schemas</dt>
+              <dd>momentum_uw_&#123;bronze,silver,gold,ai&#125;</dd>
               <dt>Model</dt>
               <dd>databricks-claude-sonnet-4-6</dd>
             </dl>
