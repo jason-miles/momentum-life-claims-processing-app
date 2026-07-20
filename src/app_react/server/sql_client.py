@@ -111,14 +111,41 @@ def _cache_key(sql: str, params: dict | None) -> str:
     return sql if not params else sql + "\x00" + repr(sorted(params.items()))
 
 
+# --- pooled connection --------------------------------------------------------
+# Opening a warehouse connection costs ~3.5s, and multi-query pages (exec KPIs,
+# claim detail) fire several queries — so a fresh connection per query was the
+# dominant page-load latency (5 queries ≈ 20s). Reuse one shared connection,
+# serialized by a lock and transparently re-opened if it goes stale/broken.
+_CONN = None
+_CONN_LOCK = threading.RLock()
+
+
+def _get_conn():
+    global _CONN
+    if _CONN is None:
+        _CONN = _connect()
+    return _CONN
+
+
+def _reset_conn():
+    global _CONN
+    try:
+        if _CONN is not None:
+            _CONN.close()
+    except Exception:
+        pass
+    _CONN = None
+
+
 def run_query(
     sql: str, params: dict | None = None, use_cache: bool = True
 ) -> list[dict]:
     """Execute a read query and return a list of row dicts (cached ~60s).
 
-    ``params`` are bound via the connector's native parameter markers (``:name``)
-    — NEVER interpolate untrusted values into ``sql`` yourself. Raises
-    ``ConnectionUnavailable`` if the warehouse cannot be reached.
+    Reuses a shared pooled connection (see _get_conn) so multi-query pages don't
+    pay the per-query connect cost. ``params`` are bound via the connector's
+    native ``:name`` markers — NEVER interpolate untrusted values into ``sql``.
+    Raises ``ConnectionUnavailable`` if the warehouse cannot be reached.
     """
     key = _cache_key(sql, params)
     if use_cache:
@@ -128,18 +155,13 @@ def run_query(
                 _CACHE.move_to_end(key)
                 return hit[1]
 
-    conn = _connect()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(sql, params or None)
-            rows = cur.fetchall()
-            cols = [d[0] for d in cur.description] if cur.description else []
-        out = [dict(zip(cols, [_json_safe(v) for v in r])) for r in rows]
-    finally:
+    with _CONN_LOCK:
         try:
-            conn.close()
+            out = _exec_on_shared(sql, params)
         except Exception:
-            pass
+            # Connection may be stale/closed — reset once and retry.
+            _reset_conn()
+            out = _exec_on_shared(sql, params)
 
     if use_cache:
         with _CACHE_LOCK:
@@ -148,6 +170,15 @@ def run_query(
             while len(_CACHE) > _CACHE_MAX:
                 _CACHE.popitem(last=False)  # evict oldest (LRU)
     return out
+
+
+def _exec_on_shared(sql: str, params: dict | None) -> list[dict]:
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(sql, params or None)
+        rows = cur.fetchall()
+        cols = [d[0] for d in cur.description] if cur.description else []
+    return [dict(zip(cols, [_json_safe(v) for v in r])) for r in rows]
 
 
 def execute(sql: str, params: dict | None = None) -> None:
