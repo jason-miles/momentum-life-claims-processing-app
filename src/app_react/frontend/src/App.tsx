@@ -10,6 +10,8 @@ import NtuOps from './pages/NtuOps'
 import ExecView from './pages/ExecView'
 import Fraud from './pages/Fraud'
 import Admin from './pages/Admin'
+import Underwriting from './pages/Underwriting'
+import UwAnalytics from './pages/UwAnalytics'
 
 const LOGO = '/momentum_life_logo.png'
 
@@ -61,15 +63,52 @@ const I = {
       <path d="M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6" />
     </svg>
   ),
+  uw: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 12l2 2 4-4" />
+      <path d="M12 3a2 2 0 0 1 1 .27l6 3.46A2 2 0 0 1 20 8.46v3.54c0 4.5-3 8-8 9.5-5-1.5-8-5-8-9.5V8.46a2 2 0 0 1 1-1.73l6-3.46A2 2 0 0 1 12 3z" />
+    </svg>
+  ),
+  uwChart: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 3v18h18" />
+      <rect x="7" y="11" width="3" height="6" rx="0.5" />
+      <rect x="12" y="7" width="3" height="10" rx="0.5" />
+      <rect x="17" y="13" width="3" height="4" rx="0.5" />
+    </svg>
+  ),
 }
 
-const NAV: NavItem[] = [
-  { to: '/exec', label: 'Executive View', icon: I.exec },
-  { to: '/', label: 'Claims Inbox', icon: I.inbox },
-  { to: '/copilot', label: 'AI Copilot', icon: I.copilot },
-  { to: '/ntu', label: 'NTU / Ops', icon: I.ntu },
-  { to: '/fraud', label: 'Fraud Workbench', icon: I.fraud },
-  { to: '/admin', label: 'Admin Console', icon: I.admin },
+interface NavGroup {
+  label: string
+  items: NavItem[]
+}
+
+const NAV_GROUPS: NavGroup[] = [
+  {
+    label: 'Co-Pilots',
+    items: [
+      { to: '/underwriting', label: 'Underwriting Co-Pilot', icon: I.uw },
+      { to: '/copilot', label: 'Claims Co-Pilot', icon: I.copilot },
+    ],
+  },
+  {
+    label: 'Underwriting',
+    items: [{ to: '/uw-analytics', label: 'UW Analytics', icon: I.uwChart }],
+  },
+  {
+    label: 'Claims',
+    items: [
+      { to: '/exec', label: 'Executive View', icon: I.exec },
+      { to: '/', label: 'Claims Inbox', icon: I.inbox },
+      { to: '/ntu', label: 'NTU / Ops', icon: I.ntu },
+      { to: '/fraud', label: 'Fraud Workbench', icon: I.fraud },
+    ],
+  },
+  {
+    label: 'Platform',
+    items: [{ to: '/admin', label: 'Admin Console', icon: I.admin }],
+  },
 ]
 
 function ConnDot() {
@@ -114,25 +153,27 @@ function Sidebar() {
         </span>
         <span className="brand-text">
           Momentum Life
-          <small>Claims Processing</small>
+          <small>Underwriting & Claims</small>
         </span>
       </div>
-      <nav className="nav-group">
-        <div className="nav-group-label">Claims</div>
-        {NAV.map((n) => (
-          <NavLink
-            key={n.to}
-            to={n.to}
-            end={n.to === '/'}
-            className={({ isActive }) => 'nav-chip' + (isActive ? ' active' : '')}
-          >
-            <span className="ico" aria-hidden="true">
-              {n.icon}
-            </span>
-            <span className="nav-label">{n.label}</span>
-          </NavLink>
-        ))}
-      </nav>
+      {NAV_GROUPS.map((g) => (
+        <nav className="nav-group" key={g.label}>
+          <div className="nav-group-label">{g.label}</div>
+          {g.items.map((n) => (
+            <NavLink
+              key={n.to}
+              to={n.to}
+              end={n.to === '/'}
+              className={({ isActive }) => 'nav-chip' + (isActive ? ' active' : '')}
+            >
+              <span className="ico" aria-hidden="true">
+                {n.icon}
+              </span>
+              <span className="nav-label">{n.label}</span>
+            </NavLink>
+          ))}
+        </nav>
+      ))}
       <div className="sidebar-foot">
         <div className="small">Assessment Analytics Portal</div>
         <div className="small muted">Synthetic data · demo</div>
@@ -148,8 +189,8 @@ function Shell() {
       <div className="main">
         <header className="topbar">
           <div className="title">
-            <h1>Claims Processing</h1>
-            <div className="small muted">Momentum Life — Assessment Analytics Portal</div>
+            <h1>Momentum Life</h1>
+            <div className="small muted">Underwriting & Claims — Intelligence Portal</div>
           </div>
           <div className="topbar-right">
             <ConnDot />
@@ -164,6 +205,8 @@ function Shell() {
           <Route path="/exec" element={<ExecView />} />
           <Route path="/fraud" element={<Fraud />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/underwriting" element={<Underwriting />} />
+          <Route path="/uw-analytics" element={<UwAnalytics />} />
         </Routes>
       </div>
     </div>

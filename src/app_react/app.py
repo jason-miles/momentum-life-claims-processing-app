@@ -10,9 +10,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from server.routes import claims
+from server.routes import claims, underwriting
 
-app = FastAPI(title="Momentum Life — Claims Processing", version="1.0.0")
+app = FastAPI(title="Momentum Life — Claims & Underwriting", version="1.1.0")
 
 # CORS for local dev (Vite :5173 -> FastAPI :8000). Harmless in the deployed app.
 app.add_middleware(
@@ -24,6 +24,7 @@ app.add_middleware(
 )
 
 app.include_router(claims.router)
+app.include_router(underwriting.router)
 
 # Serve the React SPA. Built artifacts live in webroot/ (a copy of frontend/dist
 # under a name `databricks sync` won't special-case). Fall back to frontend/dist

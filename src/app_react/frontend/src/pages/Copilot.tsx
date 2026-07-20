@@ -48,8 +48,8 @@ export default function Copilot() {
 
   return (
     <Page
-      title="AI Copilot"
-      sub="Ask questions across all claims — powered by the Momentum Claims Analyst Genie space"
+      title="Claims Co-Pilot"
+      sub="Natural-language Q&A across all claims — powered by the Momentum Claims Analyst Genie space"
     >
       <Card>
         <div className="suggest-chips">

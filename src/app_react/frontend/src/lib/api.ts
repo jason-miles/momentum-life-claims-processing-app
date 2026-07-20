@@ -208,6 +208,83 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   return (await res.json()) as T
 }
 
+/* ---------------- Underwriting types ---------------- */
+export interface UwCase {
+  policy_no: string
+  benefit_type?: string
+  journey_type?: string
+  sar_band?: string
+  sum_at_risk?: number | null
+  province?: string
+  underwriter?: string
+  age?: number | null
+  smoker_flag?: boolean | null
+  occupation_class?: string
+  risk_score?: number | null
+  reqs_total?: number | null
+  reqs_returned?: number | null
+  reqs_outstanding?: number | null
+  decision_outcome?: string | null
+  loading_pct?: number | null
+  exclusion?: string | null
+  counteroffer_accepted?: boolean | null
+  task_status?: string
+  sla_breach?: boolean | null
+  cycle_days?: number | null
+  is_ntu?: boolean | null
+  ntu_bucket?: string | null
+  ntu_propensity?: number | null
+  days_req_outstanding?: number | null
+  [k: string]: unknown
+}
+export interface UwRequirement {
+  code: string
+  description: string
+  status: string
+  requested_ts: string | null
+  returned_ts: string | null
+}
+export interface UwNote {
+  author: string
+  note_ts: string | null
+  note_text: string
+}
+export interface UwCaseDetail {
+  row: UwCase | null
+  requirements: UwRequirement[]
+  notes: UwNote[]
+}
+export interface UwSynopsis {
+  policy_no: string
+  markdown: string
+  flags: string[]
+  citations: string[]
+  recommendation: string
+  source?: string
+}
+export interface UwExec {
+  stp_rate: number | null
+  ntu_rate: number | null
+  avg_cycle_days: number | null
+  journey_split: { journey_type: string; n: number; pct: number }[]
+  decision_split: { outcome: string; n: number; pct: number; n_loadings: number; n_exclusions: number }[]
+}
+export interface UwNtu {
+  funnel: { ntu_bucket: string; n: number; pct: number; total_sar: number }[]
+  at_risk: {
+    policy_no: string; benefit_type: string; sar_band: string; sum_at_risk: number
+    journey_type: string; underwriter: string; reqs_outstanding: number
+    days_req_outstanding: number; ntu_propensity: number
+  }[]
+}
+export interface UwReqAnalytic {
+  code: string; description: string; n_requested: number; n_returned: number
+  n_outstanding: number; pct_returned: number; avg_days_to_return: number | null
+}
+export interface UwOpsRow {
+  underwriter: string; n_cases: number; n_breach: number; avg_cycle_days: number | null; n_closed: number
+}
+
 export const api = {
   health: () => get<Health>('/api/health'),
   inbox: () => get<{ claims: InboxClaim[] }>('/api/inbox'),
@@ -230,4 +307,13 @@ export const api = {
       action,
       payload,
     }),
+
+  // --- Underwriting ---
+  uwInbox: () => get<{ cases: UwCase[] }>('/api/uw/inbox'),
+  uwCase: (no: string) => get<UwCaseDetail>(`/api/uw/case/${encodeURIComponent(no)}`),
+  uwSynopsis: (no: string) => get<UwSynopsis>(`/api/uw/case/${encodeURIComponent(no)}/synopsis`),
+  uwExec: () => get<UwExec>('/api/uw/exec'),
+  uwNtu: () => get<UwNtu>('/api/uw/ntu'),
+  uwRequirements: () => get<{ analytics: UwReqAnalytic[] }>('/api/uw/requirements'),
+  uwOps: () => get<{ ops: UwOpsRow[] }>('/api/uw/ops'),
 }
