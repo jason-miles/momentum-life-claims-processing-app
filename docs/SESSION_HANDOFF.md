@@ -1,6 +1,37 @@
 # Session Handoff — Momentum Life Claims Processing App
 
-**Last updated:** 2026-07-20 (React rebrand complete + deployed + verified)
+**Last updated:** 2026-07-20 (two-domain: + Underwriting & Claims Co-Pilots)
+
+## ✅ UPDATE 2 — Underwriting Co-Pilot + Claims Co-Pilot added (two-domain app)
+
+The app expanded from claims-only to **Underwriting & Claims**, per the underwriting
+Drive spec (Underwriting_Modernization_Requirements_v1.1, folder 15p7u3Y8...).
+
+- **New synthetic underwriting domain** in `elexon_app_for_settlement_acc_catalog`
+  schemas `momentum_uw_{bronze,silver,gold,ai}`: 4,003 applications, journeys
+  (auto_requirements/refer_underwriter/fast_track/tele_underwriting), requirements,
+  decisions (incl. counteroffers w/ loadings & exclusions), BPM tasks, underwriter
+  notepad, NTU (~29%, buckets 62/19/12/7 matching demo slide 5). Generator:
+  `src/synthetic_data/generate_underwriting.py`. 3 seeded cases: UW-CLEAN-FASTTRACK,
+  UW-COUNTEROFFER (+75% loading, not accepted), UW-NTU-RISK (propensity 0.907).
+- **Gold**: `uw_case_view` (unified case, keyed policy_no), `uw_journey_split`,
+  `uw_decision_split`, `uw_ntu_funnel`, `uw_ntu_at_risk`, `uw_requirement_analytics`,
+  `uw_ops_metrics`. 3 UC metric views: `uw_stp_rate`, `uw_turnaround`, `uw_ntu_rate`.
+  4 UC agent tools in `momentum_uw_ai` (get_uw_case, list_uw_requirements,
+  get_uw_notes, ntu_risk_reason) + `uw_note_chunks` (CDF) for Vector Search.
+- **Backend**: `server/uw_data.py` + `server/routes/underwriting.py` → `/api/uw/*`
+  (inbox, case, case synopsis [Claude ai_query, advisory], exec, ntu, requirements, ops).
+- **Frontend**: `pages/Underwriting.tsx` (Co-Pilot workbench: NTU-ranked case queue +
+  unified case view + AI risk synopsis + NTU intervention panel), `pages/UwAnalytics.tsx`,
+  renamed AI Copilot → **Claims Co-Pilot**. Sidebar regrouped: **Co-Pilots /
+  Underwriting / Claims / Platform**. Topbar now "Momentum Life — Underwriting & Claims".
+- **App SP `4b5790c0-...` granted** SELECT/EXECUTE on the momentum_uw_* schemas.
+- **Warehouse scaled** Small → Medium, max 3 clusters (perf).
+- Backend verified live: STP 29.9%, NTU 28.9%, funnel matches spec, synopsis via Claude.
+- Deployed to the same app (momentum-claims-portal), RUNNING. Commit c219450.
+
+---
+
 **Pick-up owner:** Jason Miles
 **Repo (local):** `/Users/jason.miles/vibe-coding-repos/Momentum/momentum-claims-demo`
 **GitHub:** https://github.com/jason-miles/momentum-life-claims-processing-app (PUBLIC)
