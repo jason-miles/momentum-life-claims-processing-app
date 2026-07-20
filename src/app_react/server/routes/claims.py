@@ -108,10 +108,13 @@ def record_action(body: ActionIn):
     if body.action not in ALLOWED_ACTIONS:
         return {"ok": False, "error": f"unknown action '{body.action}'"}
     try:
+        # Use INSERT ... SELECT (not VALUES): with bound parameters a VALUES
+        # clause is treated as an inline table, where Spark refuses to evaluate
+        # non-deterministic functions like uuid()/current_timestamp().
         execute(
             f"INSERT INTO {o('app_events')} "
-            "(event_id, claim_no, user_role, action, payload, ts) VALUES "
-            "(uuid(), :claim_no, :user_role, :action, :payload, current_timestamp())",
+            "(event_id, claim_no, user_role, action, payload, ts) "
+            "SELECT uuid(), :claim_no, :user_role, :action, :payload, current_timestamp()",
             {
                 "claim_no": body.claim_no,
                 "user_role": body.user_role,
