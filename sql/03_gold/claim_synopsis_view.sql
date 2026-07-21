@@ -23,7 +23,12 @@ WITH primary_life AS (
     QUALIFY ROW_NUMBER() OVER (PARTITION BY policy_no ORDER BY life_id) = 1
 ),
 claim_benefit AS (
-    -- The benefit whose type matches the claim (income -> income_protection).
+    -- The benefit backing the claim. PREFER the benefit whose type matches the
+    -- claim (income -> income_protection); otherwise fall back to any benefit on
+    -- the policy (preferring in-force, then largest). A real claim is always
+    -- against a held benefit, so we join at policy level and rank by type-match
+    -- rather than filtering to the exact type (which left ~38% of synthetic
+    -- claims with no benefit, since a policy carries only a random 1-4 types).
     SELECT
         c.claim_no,
         b.benefit_type,
@@ -34,11 +39,13 @@ claim_benefit AS (
     FROM elexon_app_for_settlement_acc_catalog.momentum_claims_silver.claim c
     JOIN elexon_app_for_settlement_acc_catalog.momentum_claims_silver.benefit b
       ON b.policy_no = c.policy_no
-     AND b.benefit_type = CASE WHEN c.claim_type = 'income'
-                               THEN 'income_protection' ELSE c.claim_type END
     QUALIFY ROW_NUMBER() OVER (
         PARTITION BY c.claim_no
-        ORDER BY (b.status = 'in_force') DESC, b.sum_assured DESC
+        ORDER BY
+            (b.benefit_type = CASE WHEN c.claim_type = 'income'
+                                   THEN 'income_protection' ELSE c.claim_type END) DESC,
+            (b.status = 'in_force') DESC,
+            b.sum_assured DESC
     ) = 1
 ),
 req_rollup AS (
