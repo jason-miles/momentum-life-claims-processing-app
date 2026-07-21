@@ -27,6 +27,20 @@ _WARM_UW = ["UW-CLEAN-FASTTRACK", "UW-COUNTEROFFER", "UW-NTU-RISK"]
 
 def _prewarm() -> None:
     try:
+        # 1) Warm the pooled connection + prime the result cache for the pages
+        #    the user hits first (Overview, both inboxes, both exec views), so
+        #    the first real click doesn't pay the ~3s cold-connect. Cheap + safe.
+        from server import data, uw_data
+        for fn in (data.exec_kpis, data.claims_inbox, uw_data.uw_exec,
+                   uw_data.uw_inbox, uw_data.uw_ntu):
+            try:
+                fn()
+            except Exception:
+                pass
+        log.info("query pre-warm complete")
+
+        # 2) Warm the seeded-case synopses (Claude ~30s each) so the demo cases
+        #    open instantly.
         from server.agent_client import draft_synopsis
         from server.uw_data import uw_synopsis
         for c in _WARM_CLAIMS:
@@ -41,7 +55,7 @@ def _prewarm() -> None:
                 pass
         log.info("synopsis pre-warm complete")
     except Exception as exc:  # pragma: no cover
-        log.warning("synopsis pre-warm skipped: %s", exc)
+        log.warning("pre-warm skipped: %s", exc)
 
 
 @app.on_event("startup")
