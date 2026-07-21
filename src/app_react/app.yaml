@@ -24,4 +24,4 @@ env:
   - name: UW_GENIE_SPACE_ID
     value: "01f184232e3012439e84ae6cab552b1e"
   - name: MOMENTUM_LLM_ENDPOINT
-    value: "databricks-claude-sonnet-4-6"
+    value: "databricks-claude-haiku-4-5"

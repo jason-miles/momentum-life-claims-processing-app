@@ -19,7 +19,11 @@ AI = os.environ.get("MOMENTUM_AI_SCHEMA", "momentum_claims_ai")
 WAREHOUSE_ID = os.environ.get("DATABRICKS_WAREHOUSE_ID", "dcb1c3dd8d1570d6")
 GENIE_SPACE_ID = os.environ.get("GENIE_SPACE_ID", "01f18397532a1ba0b35d2e530bd1691a")
 UW_GENIE_SPACE_ID = os.environ.get("UW_GENIE_SPACE_ID", "01f184232e3012439e84ae6cab552b1e")
-LLM_ENDPOINT = os.environ.get("MOMENTUM_LLM_ENDPOINT", "databricks-claude-sonnet-4-6")
+# Interactive synopsis endpoint. Haiku is ~5.6x faster than Sonnet (≈5s vs ≈27s)
+# and passes the underwriting agent eval at 1.0 on all scorers, so it's the
+# default for the live-drafted synopsis. Override to a Sonnet endpoint via
+# MOMENTUM_LLM_ENDPOINT if richer narratives are wanted over latency.
+LLM_ENDPOINT = os.environ.get("MOMENTUM_LLM_ENDPOINT", "databricks-claude-haiku-4-5")
 
 # --- Fully-qualified object names --------------------------------------------
 def g(obj: str) -> str:

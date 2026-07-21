@@ -18,7 +18,7 @@ CAT = os.environ.get("MOMENTUM_CATALOG", "elexon_app_for_settlement_acc_catalog"
 G = f"{CAT}." + os.environ.get("MOMENTUM_UW_GOLD_SCHEMA", "momentum_uw_gold")
 S = f"{CAT}." + os.environ.get("MOMENTUM_UW_SILVER_SCHEMA", "momentum_uw_silver")
 AI = f"{CAT}." + os.environ.get("MOMENTUM_UW_AI_SCHEMA", "momentum_uw_ai")
-LLM = os.environ.get("MOMENTUM_LLM_ENDPOINT", "databricks-claude-sonnet-4-6")
+LLM = os.environ.get("MOMENTUM_LLM_ENDPOINT", "databricks-claude-haiku-4-5")
 
 
 def _vs_safe(text: str) -> str:
