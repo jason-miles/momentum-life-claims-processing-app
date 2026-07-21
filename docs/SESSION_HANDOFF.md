@@ -1,6 +1,34 @@
 # Session Handoff — Momentum Life Claims Processing App
 
-**Last updated:** 2026-07-20 (UW polish: Genie, VS RAG, Exec View, dashboard)
+**Last updated:** 2026-07-21 (perf pass + 2nd Isaac review; all 36 commits pushed)
+
+## ✅ UPDATE 4 — Performance + security-review round (deployed, pushed)
+
+- **2nd Isaac review** (post-expansion code): caught + fixed a live SQL-injection
+  in BOTH RAG functions (search text interpolated into a Vector Search
+  table-valued-function arg; quote-doubling defeated by Spark backslash-escaping).
+  Fixed with `_vs_safe()` allowlist in agent_client.py + uw_data.py. Verified the
+  exploit is neutralised; RAG still returns cited similar cases. Plus 5 frontend
+  UX findings (Overview loading/error state, propensity guard, Genie [object
+  Object], etc.) — all fixed.
+- **Slow-refresh root cause = connection-per-query** (~3.5s each). Fixed with a
+  single pooled connection reused under a lock (sql_client._get_conn / _CONN):
+  Claim Detail 20s→2.5s, Exec 14s→5s, Inbox 4.5s→0.9s. NOTE: a parallel
+  connection-pool attempt SEGFAULTED (exit 139) — the databricks-sql-connector is
+  NOT safe for concurrent connections; reverted, kept serial pooling. Do not
+  re-attempt threaded queries.
+- **Interactive synopsis switched to Claude Haiku 4.5** (was Sonnet 4.6): timed
+  26.6s→4.7s (~5.6x); UW agent eval still 1.0 on all scorers. Env-overridable via
+  MOMENTUM_LLM_ENDPOINT (config.LLM_ENDPOINT + uw_data.LLM + app.yaml).
+- **Startup pre-warm** (app.py, daemon thread) now warms the pooled connection +
+  common page queries (Overview/inboxes/exec) BEFORE the seeded-case synopses, so
+  the first click after a deploy isn't cold.
+- **Underwriting MLflow eval** added (src/ai/eval/eval_uw_synopsis.py) — parity
+  with claims; wired into momentum_claims_eval job; all scorers 1.0.
+- **All 11 pages visually screenshotted** in-browser (enterprise-grade confirmed).
+- Warehouse tuned: Medium, min-2 clusters, 60-min auto-stop.
+- **36 commits, ALL PUSHED** to GitHub (HEAD 45587e8). `git push` still gated
+  agent-side — user runs it (works from their terminal / mid-turn).
 
 ## ✅ UPDATE 3 — Underwriting polish round (all deployed & browser-verified)
 
