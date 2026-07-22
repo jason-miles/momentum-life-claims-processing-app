@@ -1,0 +1,416 @@
+{
+  "datasets": [
+    {
+      "name": "ds_uw_stp",
+      "displayName": "UW STP rate",
+      "queryLines": [
+        "SELECT MEASURE(stp_rate) AS stp_rate ",
+        "FROM elexon_app_for_settlement_acc_catalog.momentum_uw_gold.uw_stp_rate"
+      ]
+    },
+    {
+      "name": "ds_uw_ntu",
+      "displayName": "UW NTU rate",
+      "queryLines": [
+        "SELECT MEASURE(ntu_rate) AS ntu_rate ",
+        "FROM elexon_app_for_settlement_acc_catalog.momentum_uw_gold.uw_ntu_rate"
+      ]
+    },
+    {
+      "name": "ds_uw_turnaround",
+      "displayName": "UW avg turnaround days",
+      "queryLines": [
+        "SELECT MEASURE(avg_cycle_days) AS avg_cycle_days ",
+        "FROM elexon_app_for_settlement_acc_catalog.momentum_uw_gold.uw_turnaround"
+      ]
+    },
+    {
+      "name": "ds_uw_journey",
+      "displayName": "UW journey split",
+      "queryLines": [
+        "SELECT journey_type, n ",
+        "FROM elexon_app_for_settlement_acc_catalog.momentum_uw_gold.uw_journey_split"
+      ]
+    },
+    {
+      "name": "ds_uw_ntu_funnel",
+      "displayName": "UW NTU drop-off by bucket",
+      "queryLines": [
+        "SELECT ntu_bucket, n ",
+        "FROM elexon_app_for_settlement_acc_catalog.momentum_uw_gold.uw_ntu_funnel"
+      ]
+    },
+    {
+      "name": "ds_claims_cycle",
+      "displayName": "Claims avg cycle time",
+      "queryLines": [
+        "SELECT MEASURE(avg_cycle_days) AS avg_cycle_days ",
+        "FROM elexon_app_for_settlement_acc_catalog.momentum_claims_gold.claim_cycle_time"
+      ]
+    },
+    {
+      "name": "ds_claims_ntu",
+      "displayName": "Claims NTU rate",
+      "queryLines": [
+        "SELECT MEASURE(ntu_rate) AS ntu_rate ",
+        "FROM elexon_app_for_settlement_acc_catalog.momentum_claims_gold.ntu_rate"
+      ]
+    },
+    {
+      "name": "ds_claims_sla",
+      "displayName": "Claims SLA attainment",
+      "queryLines": [
+        "SELECT MEASURE(sla_attainment_pct)/100 AS sla_attainment ",
+        "FROM elexon_app_for_settlement_acc_catalog.momentum_claims_gold.sla_attainment"
+      ]
+    },
+    {
+      "name": "ds_claims_decision",
+      "displayName": "Claims decision split",
+      "queryLines": [
+        "SELECT decision, SUM(n) AS n ",
+        "FROM elexon_app_for_settlement_acc_catalog.momentum_claims_gold.decision_split ",
+        "GROUP BY decision"
+      ]
+    },
+    {
+      "name": "ds_claims_province",
+      "displayName": "Claims by province",
+      "queryLines": [
+        "SELECT province, COUNT(*) AS n ",
+        "FROM elexon_app_for_settlement_acc_catalog.momentum_claims_gold.claim_synopsis_view ",
+        "WHERE province IS NOT NULL ",
+        "GROUP BY province ",
+        "ORDER BY n DESC"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "page_exec_overview",
+      "displayName": "Executive Overview",
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layout": [
+        {
+          "widget": {
+            "name": "title",
+            "multilineTextboxSpec": {
+              "lines": ["# Momentum Life — Executive Overview · Underwriting & Claims (synthetic)"]
+            }
+          },
+          "position": {"x": 0, "y": 0, "width": 6, "height": 1}
+        },
+        {
+          "widget": {
+            "name": "uw_section_header",
+            "multilineTextboxSpec": {
+              "lines": ["## Underwriting — new business"]
+            }
+          },
+          "position": {"x": 0, "y": 1, "width": 6, "height": 1}
+        },
+        {
+          "widget": {
+            "name": "uw_stp_counter",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "ds_uw_stp",
+                "fields": [{"name": "stp_rate", "expression": "`stp_rate`"}],
+                "disaggregated": true
+              }
+            }],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "stp_rate",
+                  "displayName": "STP rate",
+                  "format": {"type": "number-percent", "decimalPlaces": {"type": "max", "places": 1}}
+                }
+              },
+              "frame": {"showTitle": true, "title": "UW STP rate"}
+            }
+          },
+          "position": {"x": 0, "y": 2, "width": 2, "height": 3}
+        },
+        {
+          "widget": {
+            "name": "uw_ntu_counter",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "ds_uw_ntu",
+                "fields": [{"name": "ntu_rate", "expression": "`ntu_rate`"}],
+                "disaggregated": true
+              }
+            }],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "ntu_rate",
+                  "displayName": "NTU rate",
+                  "format": {"type": "number-percent", "decimalPlaces": {"type": "max", "places": 1}}
+                }
+              },
+              "frame": {"showTitle": true, "title": "UW NTU rate"}
+            }
+          },
+          "position": {"x": 2, "y": 2, "width": 2, "height": 3}
+        },
+        {
+          "widget": {
+            "name": "uw_turnaround_counter",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "ds_uw_turnaround",
+                "fields": [{"name": "avg_cycle_days", "expression": "`avg_cycle_days`"}],
+                "disaggregated": true
+              }
+            }],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "avg_cycle_days",
+                  "displayName": "Avg turnaround (days)",
+                  "format": {"type": "number-plain", "decimalPlaces": {"type": "max", "places": 1}}
+                }
+              },
+              "frame": {"showTitle": true, "title": "UW avg turnaround (days)"}
+            }
+          },
+          "position": {"x": 4, "y": 2, "width": 2, "height": 3}
+        },
+        {
+          "widget": {
+            "name": "uw_journey_pie",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "ds_uw_journey",
+                "fields": [
+                  {"name": "journey_type", "expression": "`journey_type`"},
+                  {"name": "sum(n)", "expression": "SUM(`n`)"}
+                ],
+                "disaggregated": false
+              }
+            }],
+            "spec": {
+              "version": 3,
+              "widgetType": "pie",
+              "encodings": {
+                "angle": {"fieldName": "sum(n)", "scale": {"type": "quantitative"}, "displayName": "Applications"},
+                "color": {"fieldName": "journey_type", "scale": {"type": "categorical"}, "displayName": "Journey type"}
+              },
+              "frame": {"showTitle": true, "title": "UW journey split"},
+              "mark": {"colors": ["#14205a", "#e4002b", "#8BCAE7", "#919191", "#00A972"]}
+            }
+          },
+          "position": {"x": 0, "y": 5, "width": 3, "height": 6}
+        },
+        {
+          "widget": {
+            "name": "uw_ntu_funnel_bar",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "ds_uw_ntu_funnel",
+                "fields": [
+                  {"name": "ntu_bucket", "expression": "`ntu_bucket`"},
+                  {"name": "sum(n)", "expression": "SUM(`n`)"}
+                ],
+                "disaggregated": false
+              }
+            }],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {"fieldName": "ntu_bucket", "scale": {"type": "categorical", "sort": {"by": "y-reversed"}}, "displayName": "NTU bucket"},
+                "y": {"fieldName": "sum(n)", "scale": {"type": "quantitative"}, "displayName": "Applications"},
+                "color": {
+                  "fieldName": "ntu_bucket",
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {"value": "requirements_never_returned", "color": "#e4002b"},
+                      {"value": "counteroffer_not_accepted", "color": "#14205a"},
+                      {"value": "withdrew_at_quote", "color": "#14205a"},
+                      {"value": "postpone_lapsed", "color": "#14205a"}
+                    ]
+                  },
+                  "displayName": "NTU bucket"
+                },
+                "label": {"show": true}
+              },
+              "frame": {"showTitle": true, "title": "UW NTU drop-off by bucket"}
+            }
+          },
+          "position": {"x": 3, "y": 5, "width": 3, "height": 6}
+        },
+        {
+          "widget": {
+            "name": "claims_section_header",
+            "multilineTextboxSpec": {
+              "lines": ["## Claims — assessment"]
+            }
+          },
+          "position": {"x": 0, "y": 11, "width": 6, "height": 1}
+        },
+        {
+          "widget": {
+            "name": "claims_cycle_counter",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "ds_claims_cycle",
+                "fields": [{"name": "avg_cycle_days", "expression": "`avg_cycle_days`"}],
+                "disaggregated": true
+              }
+            }],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "avg_cycle_days",
+                  "displayName": "Avg cycle time (days)",
+                  "format": {"type": "number-plain", "decimalPlaces": {"type": "max", "places": 1}}
+                }
+              },
+              "frame": {"showTitle": true, "title": "Claims avg cycle time (days)"}
+            }
+          },
+          "position": {"x": 0, "y": 12, "width": 2, "height": 3}
+        },
+        {
+          "widget": {
+            "name": "claims_ntu_counter",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "ds_claims_ntu",
+                "fields": [{"name": "ntu_rate", "expression": "`ntu_rate`"}],
+                "disaggregated": true
+              }
+            }],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "ntu_rate",
+                  "displayName": "NTU rate",
+                  "format": {"type": "number-percent", "decimalPlaces": {"type": "max", "places": 1}}
+                }
+              },
+              "frame": {"showTitle": true, "title": "Claims NTU rate"}
+            }
+          },
+          "position": {"x": 2, "y": 12, "width": 2, "height": 3}
+        },
+        {
+          "widget": {
+            "name": "claims_sla_counter",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "ds_claims_sla",
+                "fields": [{"name": "sla_attainment", "expression": "`sla_attainment`"}],
+                "disaggregated": true
+              }
+            }],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sla_attainment",
+                  "displayName": "SLA attainment",
+                  "format": {"type": "number-percent", "decimalPlaces": {"type": "max", "places": 1}}
+                }
+              },
+              "frame": {"showTitle": true, "title": "Claims SLA attainment"}
+            }
+          },
+          "position": {"x": 4, "y": 12, "width": 2, "height": 3}
+        },
+        {
+          "widget": {
+            "name": "claims_decision_pie",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "ds_claims_decision",
+                "fields": [
+                  {"name": "decision", "expression": "`decision`"},
+                  {"name": "sum(n)", "expression": "SUM(`n`)"}
+                ],
+                "disaggregated": false
+              }
+            }],
+            "spec": {
+              "version": 3,
+              "widgetType": "pie",
+              "encodings": {
+                "angle": {"fieldName": "sum(n)", "scale": {"type": "quantitative"}, "displayName": "Claims"},
+                "color": {
+                  "fieldName": "decision",
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {"value": "pay", "color": "#14205a"},
+                      {"value": "refer", "color": "#8BCAE7"},
+                      {"value": "decline", "color": "#e4002b"}
+                    ]
+                  },
+                  "displayName": "Decision"
+                }
+              },
+              "frame": {"showTitle": true, "title": "Claims decision split"}
+            }
+          },
+          "position": {"x": 0, "y": 15, "width": 3, "height": 6}
+        },
+        {
+          "widget": {
+            "name": "claims_province_bar",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "ds_claims_province",
+                "fields": [
+                  {"name": "province", "expression": "`province`"},
+                  {"name": "sum(n)", "expression": "SUM(`n`)"}
+                ],
+                "disaggregated": false
+              }
+            }],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {"fieldName": "province", "scale": {"type": "categorical", "sort": {"by": "y-reversed"}}, "displayName": "Province"},
+                "y": {"fieldName": "sum(n)", "scale": {"type": "quantitative"}, "displayName": "Claims"},
+                "label": {"show": true}
+              },
+              "frame": {"showTitle": true, "title": "Claims by province"},
+              "mark": {"colors": ["#14205a"]}
+            }
+          },
+          "position": {"x": 3, "y": 15, "width": 3, "height": 6}
+        }
+      ]
+    }
+  ],
+  "uiSettings": {
+    "theme": {"widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"},
+    "applyModeEnabled": false
+  }
+}
