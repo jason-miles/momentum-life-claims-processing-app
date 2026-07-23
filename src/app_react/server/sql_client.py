@@ -181,6 +181,28 @@ def _exec_on_shared(sql: str, params: dict | None) -> list[dict]:
     return [dict(zip(cols, [_json_safe(v) for v in r])) for r in rows]
 
 
+def run_query_isolated(sql: str, params: dict | None = None) -> list[dict]:
+    """Run a read query on a DEDICATED short-lived connection (NOT the shared
+    pooled one, and NOT holding _CONN_LOCK).
+
+    Use this for slow queries — chiefly `ai_query(...)` synopsis/copilot calls
+    (~5-30s) — so they don't block every other request behind the global lock.
+    Fast data-page queries should use run_query (pooled). Never cached.
+    """
+    conn = _connect()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(sql, params or None)
+            rows = cur.fetchall()
+            cols = [d[0] for d in cur.description] if cur.description else []
+        return [dict(zip(cols, [_json_safe(v) for v in r])) for r in rows]
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
+
+
 def execute(sql: str, params: dict | None = None) -> None:
     """Execute a write/DDL statement (not cached).
 

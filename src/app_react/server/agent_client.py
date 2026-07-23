@@ -2,7 +2,7 @@
 
 Resolution order (never hard-crashes):
 1. Real agent ``ai.agents.synopsis_agent.draft_synopsis`` if importable.
-2. SQL context + ``ai_query`` to the Claude Sonnet FM endpoint.
+2. SQL context + ``ai_query`` to the Claude FM endpoint (LLM_ENDPOINT; Haiku by default).
 3. Deterministic heuristic synopsis so the UI always renders.
 
 ``draft_synopsis(claim_no) -> dict`` and ``ask_claim_copilot(claim_no, q) -> str``.
@@ -122,10 +122,12 @@ def _ai_query_synopsis(row: dict) -> dict | None:
     try:
         # Bind BOTH the endpoint name and the prompt as parameters so no
         # user/claim-derived text is ever interpolated into SQL syntax.
-        rows = run_query(
+        # Isolated connection: the ~5-30s ai_query must NOT hold the shared
+        # pooled-connection lock and block every other request (Isaac #3).
+        from server.sql_client import run_query_isolated
+        rows = run_query_isolated(
             "SELECT ai_query(:endpoint, :prompt) AS synopsis",
             {"endpoint": LLM_ENDPOINT, "prompt": prompt},
-            use_cache=False,
         )
         if not rows:
             return None
@@ -224,7 +226,7 @@ def _vs_safe(text: str) -> str:
 
 
 def ask_claim_copilot(claim_no: str, question: str) -> str:
-    from server.sql_client import run_query
+    from server.sql_client import run_query_isolated
 
     try:
         row = _fetch_claim_row(claim_no)
@@ -240,10 +242,9 @@ def ask_claim_copilot(claim_no: str, question: str) -> str:
         f"CLAIM FACTS: {context}\n\nQUESTION: {question}"
     )
     try:
-        rows = run_query(
+        rows = run_query_isolated(
             "SELECT ai_query(:endpoint, :prompt) AS a",
             {"endpoint": LLM_ENDPOINT, "prompt": prompt},
-            use_cache=False,
         )
         return str(rows[0]["a"]) if rows else "No answer returned."
     except Exception as exc:

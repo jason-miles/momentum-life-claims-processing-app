@@ -190,7 +190,10 @@ def uw_synopsis(policy_no: str) -> dict:
         "a single line 'Recommendation: <STANDARD ACCEPT|REFER|AWAIT REQUIREMENTS|INTERVENE>'.\n\n"
         f"CASE FACTS: {json.dumps(ctx, default=str)}\n\nNOTEPAD: {notes_txt}")
     try:
-        r = run_query("SELECT ai_query(:e, :p) AS a", {"e": LLM, "p": prompt}, use_cache=False)
+        # Isolated connection so the ~5-30s ai_query doesn't hold the shared
+        # pooled-connection lock and block other requests (Isaac #3).
+        from server.sql_client import run_query_isolated
+        r = run_query_isolated("SELECT ai_query(:e, :p) AS a", {"e": LLM, "p": prompt})
         text = str(r[0]["a"]) if r else None
     except Exception:
         text = None
